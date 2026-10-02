@@ -243,6 +243,8 @@ class _SelectionPageState extends State<SelectionPage> {
         base64Encode(
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
 
+    bool allLinesPosted = true;
+
     for (int i = 0; i < selectedItems.length; i++) {
       // Initialize Description and No variables for each item
       String description = selectedItems[i].Item_Description ?? "";
@@ -276,19 +278,19 @@ class _SelectionPageState extends State<SelectionPage> {
             '${Helper.errorMessageSomethingWentWrong}', context);
       });
 
-      if (response.statusCode == 201) {
-        // Remove the item from the list if it was processed successfully
-      } else {
-        helper.flushBar2("Error", "OOPS! Try again...", context);
+      if (response.statusCode != 201) {
+        allLinesPosted = false;
+        break;
       }
     }
 
-    // After processing all items, show a success message
-    helper.flushBar2("Success", "All items submitted successfully", context);
-    //  progressDialog.hide();
-    setState(() {
-      _postVisitation();
-    });
+    progressDialog.hide();
+
+    if (allLinesPosted) {
+      await _postVisitation();
+    } else {
+      helper.flushBar2("Error", "OOPS! Try again...", context);
+    }
   }
 
   Future<void> _getSalesHeader() async {
@@ -345,6 +347,17 @@ class _SelectionPageState extends State<SelectionPage> {
 
   Future<void> _postVisitation() async {
     try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        helper.flushBar2("Error",
+            "Location permission is required to record the visit", context);
+        return;
+      }
+
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
@@ -402,6 +415,7 @@ class _SelectionPageState extends State<SelectionPage> {
       }
     } catch (e) {
       print("Error: $e");
+      helper.flushBar2("Error", e.toString(), context);
     }
   }
 

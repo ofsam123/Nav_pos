@@ -57,9 +57,8 @@ class _customerProfileState extends State<customerProfile> {
 
   List categories = [
     "All",
-    "Drinks",
-    "Cusmetics",
-    // "Pending",
+    "Today",
+    "Other",
   ];
 
   DateTime now = DateTime.now();
@@ -67,6 +66,8 @@ class _customerProfileState extends State<customerProfile> {
   bool value = false;
   int selectedCategory = 0;
   var quantityController = TextEditingController(text: "1");
+  final outcomeController = TextEditingController();
+  final commentController = TextEditingController();
   final Helper helper = new Helper();
   String Docs_No = "";
   // late Future<List<itemsModel>> _func;
@@ -133,6 +134,13 @@ class _customerProfileState extends State<customerProfile> {
       });
     });
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    outcomeController.dispose();
+    commentController.dispose();
+    super.dispose();
   }
 
   String UserName = "";
@@ -563,16 +571,8 @@ class _customerProfileState extends State<customerProfile> {
                                   onTap: () {
                                     setState(() {
                                       selectedCategory = index;
-                                      if (selectedCategory == 0) {
-                                        // endpoint = "upcomingAppointment";
-                                        // _getAppointmentBookingHistoryFunc();
-                                      } else if (selectedCategory == 1) {
-                                      } else if (selectedCategory == 2) {
-                                        // endpoint = "cancelledAppointments";
-                                        // _getAppointmentBookingHistoryFunc();
-                                      } else if (selectedCategory == 3) ;
-                                      // endpoint = "cancelledAppointments";
-                                      // _getAppointmentBookingHistoryFunc();
+                                      itemSelections =
+                                          List.filled(100, false);
                                     });
                                   },
                                   text: categories[index],
@@ -640,14 +640,16 @@ class _customerProfileState extends State<customerProfile> {
                       ),
                     );
                   } else if (snapshot.hasData) {
-                    items = snapshot.data!;
+                    items = _filterItems(snapshot.data!);
                     if (items.isEmpty) {
                       return Center(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text("No Item Received Today"),
+                            Text(selectedCategory == 1
+                                ? "No Item Received Today"
+                                : "No items available"),
                           ],
                         ),
                       );
@@ -715,7 +717,7 @@ class _customerProfileState extends State<customerProfile> {
               ),
 
               SizedBox(
-                height: 10,
+                height: 50,
               ),
             ],
           ),
@@ -812,6 +814,30 @@ class _customerProfileState extends State<customerProfile> {
     }
   }
 
+  bool _isReceivedToday(itemsModel item) {
+    final postingDate = DateTime.tryParse(item.Posting_Date ?? '');
+    final today = DateTime.now();
+    return postingDate != null &&
+        postingDate.year == today.year &&
+        postingDate.month == today.month &&
+        postingDate.day == today.day;
+  }
+
+  List<itemsModel> _filterItems(List<itemsModel> entries) {
+    final todayItemNos =
+        entries.where(_isReceivedToday).map((e) => e.Item_No).toSet();
+
+    Iterable<itemsModel> matching = entries;
+    if (selectedCategory == 1) {
+      matching = entries.where(_isReceivedToday);
+    } else if (selectedCategory == 2) {
+      matching = entries.where((e) => !todayItemNos.contains(e.Item_No));
+    }
+
+    final seenItemNos = <String?>{};
+    return matching.where((e) => seenItemNos.add(e.Item_No)).toList();
+  }
+
   Future<List<itemsModel>> _getItems1() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     Docs_No = (prefs.getString('Docs_No') ?? ''); // Update Docs_No here
@@ -822,7 +848,7 @@ class _customerProfileState extends State<customerProfile> {
     final response = await http.get(
       Uri.parse(
           "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/ItemLedgerEntryAPI?" +
-              "\$filter=Location_Code eq '${widget.responsibilityCenter.toString()}' and Posting_Date eq ${now.year}-${now.month}-19 and Quantity gt 0 and Entry_Type eq 'Transfer'"),
+              "\$filter=Location_Code eq '${widget.responsibilityCenter.toString()}' and Quantity gt 0 and Entry_Type eq 'Transfer'"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
         'Content-Type': 'application/json',
@@ -840,30 +866,17 @@ class _customerProfileState extends State<customerProfile> {
       String apiResponse = responseJson["value"].toString();
       List responseList = json.decode(response.body)["value"];
 
-      // Create a set to keep track of unique item numbers
-      Set<String> uniqueItemNumbers = Set<String>();
-      List<itemsModel> filteredItems = [];
-
-      for (var job in responseList) {
-        itemsModel item = itemsModel.fromJson(job);
-        String? itemNo = item.Item_No; // Update this to the correct field name
-
-        // Check if the item number is not in the set of unique item numbers
-        if (!uniqueItemNumbers.contains(itemNo)) {
-          // Add the item to the filtered list and the set
-          filteredItems.add(item);
-          uniqueItemNumbers.add(itemNo!);
-        }
-      }
-
-      return filteredItems;
+      return responseList.map((job) => itemsModel.fromJson(job)).toList();
     } else {
       helper.alertDialogNoTitle(response.body, context);
       throw Exception('Failed to load post');
     }
   }
 
-  Future<void> _postVisitation() async {
+  Future<void> _postVisitation({
+    String outcome = "",
+    String comment = "",
+  }) async {
     try {
       // Get the latitude and longitude as double values
       Position position = await Geolocator.getCurrentPosition(
@@ -909,8 +922,10 @@ class _customerProfileState extends State<customerProfile> {
           "UserID": UserName.toString(),
           "Longitute": longitude,
           "Latitude": latitude,
-          "Visitation_Type": "Visitation and Sales",
-          "Time": currentTime
+          "Visitation_Type": "Visitation",
+          "Time": currentTime,
+          "Comment": comment,
+          "Outcome_of_the_visit": outcome,
         }),
       )
           .catchError((err) {
@@ -950,23 +965,23 @@ class _customerProfileState extends State<customerProfile> {
       // _postVisitation(latitude, longitude);
 
       // Display the latitude and longitude (you can use a dialog or any other widget)
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Current Location"),
-            content: Text("Latitude: $latitude\nLongitude: $longitude"),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text("Close"),
-              ),
-            ],
-          );
-        },
-      );
+      // showDialog(
+      //   context: context,
+      //   builder: (BuildContext context) {
+      //     return AlertDialog(
+      //       title: Text("Current Location"),
+      //       content: Text("Latitude: $latitude\nLongitude: $longitude"),
+      //       actions: [
+      //         TextButton(
+      //           onPressed: () {
+      //             Navigator.of(context).pop();
+      //           },
+      //           child: Text("Close"),
+      //         ),
+      //       ],
+      //     );
+      //   },
+      // );
     } catch (e) {
       print("Error: $e");
       // Handle errors here
@@ -974,12 +989,39 @@ class _customerProfileState extends State<customerProfile> {
   }
 
   _Alert(BuildContext context) {
+    outcomeController.clear();
+    commentController.clear();
     showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             //title: Text("Do you want to logout ?"),
-            content: Text("Do you want mark Onsite Visitation?"),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Do you want to mark Onsite Visitation?"),
+                  SizedBox(height: 16),
+                  TextField(
+                    controller: outcomeController,
+                    decoration: InputDecoration(
+                      labelText: "Outcome of the visit",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  TextField(
+                    controller: commentController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: "Comment",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             actions: [
               TextButton(
                 child: Text("Cancel"),
@@ -999,8 +1041,10 @@ class _customerProfileState extends State<customerProfile> {
                     textStyle: const TextStyle(fontSize: 17),
                   ),
                   onPressed: () {
-                    // Replace with the actual longitude value
-                    _postVisitation();
+                    _postVisitation(
+                      outcome: outcomeController.text.trim(),
+                      comment: commentController.text.trim(),
+                    );
                     Navigator.pop(context);
                   },
                   child: Text(

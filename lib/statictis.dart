@@ -235,6 +235,38 @@ class _staticsState extends State<statics> {
     });
   }
 
+  Widget _buildItemsLeftToday() {
+    final itemsLeft = difference < 0 ? 0 : difference;
+    final hasItemsLeft = itemsLeft > 0;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            itemsLeft.toString(),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: hasItemsLeft ? Colors.green[700] : Colors.red,
+            ),
+          ),
+          SizedBox(width: 6),
+          Text(
+            hasItemsLeft ? "ITEMS LEFT\nTODAY" : "NO ITEMS\nLEFT TODAY",
+            style: TextStyle(
+              fontSize: 10,
+              height: 1.1,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _checkLocationPermission() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -253,11 +285,12 @@ class _staticsState extends State<statics> {
       appBar: AppBar(
         title: Text(
           UserName.toString(),
+          // resCenter1.toString(),
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         automaticallyImplyLeading: false,
         elevation: 0,
-        // actions: [Text(Location_Code1)],
+        actions: [_buildItemsLeftToday()],
       ),
       body: RefreshIndicator(
         onRefresh: _refreshData,
@@ -579,11 +612,17 @@ class _staticsState extends State<statics> {
                               ),
                               Padding(
                                 padding: const EdgeInsets.only(right: 20),
-                                child: Text(
-                                  totalAmount1,
-                                  style: TextStyle(
-                                      fontSize: 39,
-                                      fontWeight: FontWeight.bold),
+                                child: Container(
+                                  height: 50,
+                                  width: 110,
+                                  child: Text(
+                                    totalAmount1,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                        fontSize: 39,
+                                        fontWeight: FontWeight.bold),
+                                  ),
                                 ),
                               )
                             ],
@@ -748,8 +787,7 @@ class _staticsState extends State<statics> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => ReturnOrderLogic(
-                                          responsibilityCenter:
-                                              resCenter1.toString(),
+                                          rc: resCenter1.toString(),
                                         )));
                           },
                           child: Container(
@@ -793,12 +831,9 @@ class _staticsState extends State<statics> {
                                 ),
                                 Spacer(),
                                 Text(
-                                  "Return Order",
+                                  "Return Transafers",
                                   style: TextStyle(fontSize: 16),
                                 ),
-                                SizedBox(
-                                  height: 20,
-                                )
                               ],
                             ),
                           ),
@@ -867,7 +902,7 @@ class _staticsState extends State<statics> {
       prefs2.setString('userResCenter', userResCenter);
       prefs2.setString('Code', Code);
       prefs2.setString('Location_Code', Location_Code);
-      // helper.flushBar2('Success', 'refreshed Successful', context);
+      // helper.flushBar2('Success', userResCenter, context);
 
       setState(() {
         resCenter1 = userResCenter.toString();

@@ -1,24 +1,22 @@
-import 'package:flutter/material.dart';
-import 'dart:async';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:nav_pos/Staticticsdetail.dart/TotalItemRecievedHistory.dart';
+
+import 'package:flutter/material.dart';
+import 'package:nav_pos/API.dart';
+import 'package:nav_pos/Models/TotalItemReceivedModel.dart';
+import 'package:nav_pos/apiHelper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
-import '../API.dart';
-import '../Models/TotalItemReceivedModel.dart';
-import '../Models/itemsSoldModel.dart';
-import '../apiHelper.dart';
-
-class totalItemsRevived extends StatefulWidget {
-  totalItemsRevived({required this.responsibilityCenter});
+class TotalItemRecievedHistory extends StatefulWidget {
+  TotalItemRecievedHistory({required this.responsibilityCenter});
   final String responsibilityCenter;
 
   @override
-  State<totalItemsRevived> createState() => _totalItemsRevivedState();
+  State<TotalItemRecievedHistory> createState() =>
+      _TotalItemRecievedHistoryState();
 }
 
-class _totalItemsRevivedState extends State<totalItemsRevived> {
+class _TotalItemRecievedHistoryState extends State<TotalItemRecievedHistory> {
   final Helper helper = Helper();
   late Future<List<itemsRecivedModel>> _func;
   String? token;
@@ -48,23 +46,10 @@ class _totalItemsRevivedState extends State<totalItemsRevived> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(
-          "Total Item Received Today",
+          "Previous Items Received",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => TotalItemRecievedHistory(
-                              responsibilityCenter:
-                                  widget.responsibilityCenter.toString(),
-                            )));
-              },
-              icon: Icon(Icons.history))
-        ],
       ),
       body: Container(
         child: SingleChildScrollView(

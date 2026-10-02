@@ -167,8 +167,8 @@ class _ScanQrState extends State<ScanQr> {
                                         )));
                           },
                           style: ElevatedButton.styleFrom(
-                            primary: Colors.black,
-                            onPrimary: Colors.white,
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),

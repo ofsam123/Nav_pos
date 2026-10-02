@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 // import 'package:nav_pos/apiHelper.dart';
 import 'package:nav_pos/bottomNavigation.dart';
 import 'package:nav_pos/resetPassword.dart';
+import 'package:nav_pos/verifyUserNamePassword.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
 
@@ -176,55 +177,54 @@ class _BodyState extends State<Body> {
             ),
           ),
           SizedBox(height: 30),
-          // TextField(
-          //   controller: passwordController,
-          //   obscureText: obscureTextConfirmPassword,
-          //   decoration: InputDecoration(
-          //     hintText: ' Password',
-          //     filled: true,
-          //     fillColor: Colors.blueGrey[50],
-          //     labelStyle: TextStyle(fontSize: 12),
-          //     contentPadding: EdgeInsets.only(left: 30),
-          //     enabledBorder: OutlineInputBorder(
-          //       borderSide: BorderSide(color: Colors.blueGrey),
-          //       borderRadius: BorderRadius.circular(15),
-          //     ),
-          //     focusedBorder: OutlineInputBorder(
-          //       borderSide: BorderSide(color: Colors.blueGrey),
-          //       borderRadius: BorderRadius.circular(15),
-          //     ),
-          //     suffixIcon: IconButton(
-          //       icon: Icon(obscureTextConfirmPassword
-          //           ? Icons.visibility_off
-          //           : Icons.visibility),
-          //       onPressed: () {
-          //         setState(() {
-          //           obscureTextConfirmPassword = !obscureTextConfirmPassword;
-          //         });
-          //       },
-          //     ),
-          //   ),
-          // ),
-          // Row(
-          //   // mainAxisAlignment: MainAxisAlignment.center,
-          //   // crossAxisAlignment: CrossAxisAlignment.end,
-          //   children: [
-          //     Spacer(),
-          //     TextButton(
-          //         onPressed: () {
-          //           Navigator.push(
-          //               context,
-          //               MaterialPageRoute(
-          //                   builder: (context) => ResetPassword()));
-          //         },
-          //         child: Text(
-          //           'Set Password',
-          //           style: TextStyle(
-          //               fontWeight: FontWeight.bold, color: Colors.black),
-          //         ))
-          //   ],
-          // ),
-
+          TextField(
+            controller: passwordController,
+            obscureText: obscureTextConfirmPassword,
+            decoration: InputDecoration(
+              hintText: ' Password',
+              filled: true,
+              fillColor: Colors.blueGrey[50],
+              labelStyle: TextStyle(fontSize: 12),
+              contentPadding: EdgeInsets.only(left: 30),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.blueGrey),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.blueGrey),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(obscureTextConfirmPassword
+                    ? Icons.visibility_off
+                    : Icons.visibility),
+                onPressed: () {
+                  setState(() {
+                    obscureTextConfirmPassword = !obscureTextConfirmPassword;
+                  });
+                },
+              ),
+            ),
+          ),
+          Row(
+            // mainAxisAlignment: MainAxisAlignment.center,
+            // crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Spacer(),
+              // TextButton(
+              //     onPressed: () {
+              //       Navigator.push(
+              //           context,
+              //           MaterialPageRoute(
+              //               builder: (context) => verifyUserName()));
+              //     },
+              //     child: Text(
+              //       'Set Password',
+              //       style: TextStyle(
+              //           fontWeight: FontWeight.bold, color: Colors.black),
+              //     ))
+            ],
+          ),
           SizedBox(height: 40),
           Container(
             decoration: BoxDecoration(
@@ -243,8 +243,8 @@ class _BodyState extends State<Body> {
                 //     MaterialPageRoute(builder: (context) => OTP_Page()));
               },
               style: ElevatedButton.styleFrom(
-                primary: Colors.blue,
-                onPrimary: Colors.white,
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
@@ -338,15 +338,44 @@ class _BodyState extends State<Body> {
       String User_Name = responseJson["value"][0]["User_Name"].toString();
       String ValueE = responseJson["value"][0][""].toString();
 
+      String Change_Password_POS =
+          responseJson["value"][0]["Change_Password_POS"].toString();
+
+      String Password_POS = responseJson["value"][0]["Password_POS"].toString();
+
+      String User_Security_ID =
+          responseJson["value"][0]["User_Security_ID"].toString();
+
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString('User_Name', User_Name);
 
-      if (CanUse_POS == "true") {
+      if (CanUse_POS == "true" &&
+          Change_Password_POS == "false" &&
+          passwordController.text.toString() == Password_POS) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => MyNevBar()),
           (Route<dynamic> route) => false,
         );
+      }
+      if (passwordController.text.toString() != Password_POS) {
+        helper.flushBar2("Error", "Password Not Match", context);
+        // Navigator.push(
+        //     context, MaterialPageRoute(builder: (context) => ResetPassword()));
+      }
+      if (passwordController.text.toString() != Password_POS &&
+          Change_Password_POS == "true") {
+        helper.flushBar2("Error", "Password Not Match", context);
+        // Navigator.push(
+        //     context, MaterialPageRoute(builder: (context) => ResetPassword()));
+      } else if (CanUse_POS == "true" && Change_Password_POS == "true") {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => ResetPassword(
+                      User_Security_ID: User_Security_ID,
+                    )));
+        helper.flushBar2("Error", "Login Failed,Reset Password", context);
       } else if (CanUse_POS == "false") {
         helper.flushBar2(
             "Error", "User not Authenticated to use this POS", context);
@@ -359,3 +388,7 @@ class _BodyState extends State<Body> {
     }
   }
 }
+//CHECK IF THE passwordController == THE Password_POS
+// and the Change_Password_POS == true  Alert the use to reset his password
+//else if THE PASSWORDcONTROLLER == THE Password_POS
+//and the Change_Password_POS == false Login  

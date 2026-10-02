@@ -32,6 +32,9 @@ class _RegisterCustomerPageState extends State<RegisterCustomerPage> {
   var EmailAddressController = TextEditingController();
   var userNameController = TextEditingController();
   var passwordController = TextEditingController();
+  var contactNameController = TextEditingController();
+  var faxNoController = TextEditingController();
+  var homePageController = TextEditingController();
 
   late double myLat = 0;
   late double myLong = 0;
@@ -98,6 +101,7 @@ class _RegisterCustomerPageState extends State<RegisterCustomerPage> {
   }
 
   String newNo = "";
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -158,24 +162,25 @@ class _RegisterCustomerPageState extends State<RegisterCustomerPage> {
                           //     ),
                           //   ),
                           // ),
-                          GestureDetector(
-                            onTap: () {
-                              pickImage();
-                            },
-                            child: Container(
-                                height: 80,
-                                width: 80,
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border.all(
-                                        width: 1, color: Colors.black),
-                                    borderRadius: BorderRadius.circular(30)),
-                                child: Center(
-                                  child: image != null
-                                      ? Image.file(image!)
-                                      : Text("+ Image"),
-                                )),
-                          ),
+                          // GestureDetector(
+                          //   onTap: () {
+                          //     pickImage();
+                          //   },
+                          //   child: Container(
+                          //       height: 80,
+                          //       width: 80,
+                          //       decoration: BoxDecoration(
+                          //           color: Colors.white,
+                          //           border: Border.all(
+                          //               width: 1, color: Colors.black),
+                          //           borderRadius: BorderRadius.circular(30)),
+                          //       child: Center(
+                          //         child: image != null
+                          //             ? Image.file(image!)
+                          //             : Text("+ Image"),
+                          //       )),
+                          // ),
+
                           SizedBox(
                             height: 20,
                           ),
@@ -244,42 +249,213 @@ class _RegisterCustomerPageState extends State<RegisterCustomerPage> {
                               ),
                             ),
                           ),
-                          SizedBox(height: 30),
+                          // Padding(
+                          //   padding: const EdgeInsets.only(
+                          //     left: 20.0,
+                          //     right: 20,
+                          //   ),
+                          //   child: TextField(
+                          //     keyboardType: TextInputType.number,
+                          //     maxLength: 10,
+                          //     controller: phoneController,
+                          //     decoration: InputDecoration(
+                          //       suffixIcon: Icon(
+                          //         Icons.phone_android,
+                          //         color: Colors.grey,
+                          //       ),
+                          //       label: Text("Phone Number"),
+                          //       filled: true,
+                          //       fillColor: Colors.blueGrey[50],
+                          //       labelStyle: TextStyle(fontSize: 14),
+                          //       contentPadding: EdgeInsets.only(left: 30),
+                          //       enabledBorder: OutlineInputBorder(
+                          //         borderSide: BorderSide(
+                          //           color: Colors.blueGrey,
+                          //         ),
+                          //         borderRadius: BorderRadius.circular(15),
+                          //       ),
+                          //       focusedBorder: OutlineInputBorder(
+                          //         borderSide: BorderSide(
+                          //           color: Colors.blueGrey,
+                          //         ),
+                          //         borderRadius: BorderRadius.circular(15),
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+
+                          SizedBox(height: 20),
                           Padding(
-                            padding: const EdgeInsets.only(
-                              left: 20.0,
-                              right: 20,
-                            ),
-                            child: TextField(
-                              keyboardType: TextInputType.number,
-                              maxLength: 10,
-                              controller: phoneController,
-                              decoration: InputDecoration(
-                                suffixIcon: Icon(
-                                  Icons.phone_android,
-                                  color: Colors.grey,
-                                ),
-                                label: Text("Phone Number"),
-                                filled: true,
-                                fillColor: Colors.blueGrey[50],
-                                labelStyle: TextStyle(fontSize: 14),
-                                contentPadding: EdgeInsets.only(left: 30),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.blueGrey,
+                            padding: const EdgeInsets.only(left: 20, right: 20),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Color.fromARGB(255, 226, 226, 226),
+                                  borderRadius: BorderRadius.circular(20)),
+                              child: ExpansionTile(
+                                title: Text("Contacts"),
+                                children: [
+                                  SizedBox(
+                                    height: 10,
                                   ),
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.blueGrey,
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 20.0,
+                                      right: 20,
+                                    ),
+                                    child: TextField(
+                                      // keyboardType: TextInputType.number,
+                                      // maxLength: 10,
+                                      controller: contactNameController,
+                                      decoration: InputDecoration(
+                                        suffixIcon: Icon(
+                                          Icons.person,
+                                          color: Colors.grey,
+                                        ),
+                                        label: Text("Contact Name"),
+                                        filled: true,
+                                        fillColor: Colors.blueGrey[50],
+                                        labelStyle: TextStyle(fontSize: 14),
+                                        contentPadding:
+                                            EdgeInsets.only(left: 30),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.blueGrey,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.blueGrey,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
+                                  SizedBox(
+                                    height: 20,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 20.0,
+                                      right: 20,
+                                    ),
+                                    child: TextField(
+                                      keyboardType: TextInputType.number,
+                                      maxLength: 10,
+                                      controller: phoneController,
+                                      decoration: InputDecoration(
+                                        suffixIcon: Icon(
+                                          Icons.phone_android,
+                                          color: Colors.grey,
+                                        ),
+                                        label: Text("Phone Number"),
+                                        filled: true,
+                                        fillColor: Colors.blueGrey[50],
+                                        labelStyle: TextStyle(fontSize: 14),
+                                        contentPadding:
+                                            EdgeInsets.only(left: 30),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.blueGrey,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.blueGrey,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Padding(
+                                  //   padding: const EdgeInsets.only(
+                                  //     left: 20.0,
+                                  //     right: 20,
+                                  //   ),
+                                  //   child: TextField(
+                                  //     keyboardType: TextInputType.number,
+                                  //     // maxLength: 10,
+                                  //     controller: faxNoController,
+                                  //     decoration: InputDecoration(
+                                  //       suffixIcon: Icon(
+                                  //         Icons.numbers,
+                                  //         color: Colors.grey,
+                                  //       ),
+                                  //       label: Text("Fax No"),
+                                  //       filled: true,
+                                  //       fillColor: Colors.blueGrey[50],
+                                  //       labelStyle: TextStyle(fontSize: 14),
+                                  //       contentPadding:
+                                  //           EdgeInsets.only(left: 30),
+                                  //       enabledBorder: OutlineInputBorder(
+                                  //         borderSide: BorderSide(
+                                  //           color: Colors.blueGrey,
+                                  //         ),
+                                  //         borderRadius:
+                                  //             BorderRadius.circular(15),
+                                  //       ),
+                                  //       focusedBorder: OutlineInputBorder(
+                                  //         borderSide: BorderSide(
+                                  //           color: Colors.blueGrey,
+                                  //         ),
+                                  //         borderRadius:
+                                  //             BorderRadius.circular(15),
+                                  //       ),
+                                  //     ),
+                                  //   ),
+                                  // ),
+
+                                  SizedBox(
+                                    height: 20,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 20.0,
+                                      right: 20,
+                                    ),
+                                    child: TextField(
+                                      // keyboardType: TextInputType.number,
+                                      // maxLength: 10,
+                                      controller: homePageController,
+                                      decoration: InputDecoration(
+                                        suffixIcon: Icon(
+                                          Icons.home,
+                                          color: Colors.grey,
+                                        ),
+                                        label: Text("Home Page"),
+                                        filled: true,
+                                        fillColor: Colors.blueGrey[50],
+                                        labelStyle: TextStyle(fontSize: 14),
+                                        contentPadding:
+                                            EdgeInsets.only(left: 30),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.blueGrey,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.blueGrey,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          SizedBox(height: 10),
                           Padding(
                             padding: const EdgeInsets.only(left: 20.0),
                             child: Row(
@@ -365,8 +541,8 @@ class _RegisterCustomerPageState extends State<RegisterCustomerPage> {
                                   // showPlacePicker();
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  primary: Color.fromRGBO(15, 86, 148, 1),
-                                  onPrimary: Colors.white,
+                                  backgroundColor: Color.fromRGBO(15, 86, 148, 1),
+                                  foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(15),
                                   ),
@@ -566,13 +742,16 @@ class _RegisterCustomerPageState extends State<RegisterCustomerPage> {
                 "Name": userNameController.text.toString(),
                 "Phone_No": phoneController.text.toString(),
                 "E_Mail": EmailAddressController.text.toString(),
-                "Home_Page": "",
+                "Home_Page": homePageController.text.toString(),
                 "Responsibility_Center": widget.responsC.toString(),
+                // "Fax_No": faxNoController.text.toString(),
+                // "Contact_Name": contactNameController.text.toString(),
                 "Location_Code": Location_Code.toString(),
                 "Gen_Bus_Posting_Group": "DOMESTIC",
                 "Customer_Posting_Group": "DOMESTIC",
                 "Latitude": latitude,
                 "Longitude": longitude,
+                "Customer_Price_Group": "ACC RET"
               }))
           .catchError((err) {
         progressDialog.hide();
@@ -586,6 +765,15 @@ class _RegisterCustomerPageState extends State<RegisterCustomerPage> {
       if (response.statusCode == 201) {
         progressDialog.hide();
         String nno = responseJson["No"].toString();
+
+        Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+                builder: (context) => customerShopsPage(
+                      Id: "",
+                      responsC: widget.responsC.toString(),
+                    )),
+            (route) => false);
 
         // progressDialog.hide();
         SharedPreferences prefs2 = await SharedPreferences.getInstance();
@@ -602,8 +790,10 @@ class _RegisterCustomerPageState extends State<RegisterCustomerPage> {
         progressDialog.hide();
         // helper.flushBar2("Error", response.body, context);
 
-        helper.alertDialogNoTitle(
-            'enter a valid email  eg;test@gmail.com', context);
+        helper.alertDialogNoTitle(response.body, context);
+
+        // helper.alertDialogNoTitle(
+        //     'enter a valid email  eg;test@gmail.com', context);
       }
     } catch (e) {
       print("Error: $e");

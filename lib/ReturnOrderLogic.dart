@@ -2,16 +2,19 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:nav_pos/Models/transferLineModel.dart';
+import 'package:nav_pos/ReturnOrder2page.dart';
 import 'package:nav_pos/apiHelper.dart';
+import 'package:nav_pos/bottomNavigation.dart';
 import 'package:nav_pos/statictis.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
 import 'API.dart';
 
 class ReturnOrderLogic extends StatefulWidget {
-  ReturnOrderLogic({required String responsibilityCenter});
+  ReturnOrderLogic({super.key, required this.rc});
 
-  String? responsibilityCenter;
+  String? rc;
 
   @override
   State<ReturnOrderLogic> createState() => _ReturnOrderLogicState();
@@ -19,6 +22,8 @@ class ReturnOrderLogic extends StatefulWidget {
 
 class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
   final Helper helper = new Helper();
+
+  late Future<List<transferLineModel>> _func;
 
   _getUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -31,7 +36,9 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
     });
   }
 
+  List<String> hiddenItems = [];
   DateTime now = DateTime.now();
+
   String transferToo = "";
   String UserName = "";
   String reQty = "";
@@ -39,91 +46,308 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
   String reItemsNo = "";
   String Noss = "";
   String THNo = "";
+  String POS_Statuss = "";
+  String Qrd = "";
+  String ITMZ = "";
+  String US = "";
+
   List<String> matchingItemNos = [];
   List<int> subtractedQuantities = [];
   List<String> qtyReceivedList = [];
   List<String> qtySoldList = [];
   List<String> unmatchedItemNos = [];
 
+  int totalItems = 0;
+
   @override
   void initState() {
+    // _func = _THETransferLine();
+    QRecieve11();
     super.initState();
     _getUserData();
-    QRecieve();
-    QSold();
+
+    totalItems = matchingItemNos.length + unmatchedItemNos.length;
+
     // _getTransferHeader();
 
-    Timer(Duration(seconds: 1), () {
+    Timer(Duration(seconds: 2), () {
       // _getTransferHeader();
+
       setState(() {});
     });
   }
+// Declare totalItems here
+
+  void deleteItem(int index) {
+    setState(() {
+      // Remove the item from the respective lists
+
+      if (index < matchingItemNos.length) {
+        matchingItemNos.removeAt(index);
+        subtractedQuantities.removeAt(index);
+      } else {
+        int unmatchedIndex = index - matchingItemNos.length;
+        if (unmatchedIndex < unmatchedItemNos.length) {
+          unmatchedItemNos.removeAt(unmatchedIndex);
+        }
+      }
+    });
+  }
+
+  // Map to store grouped items with combined return quantity
+  Map<String, int> groupedItems = {};
+  // ... other methods
+  void calculateSubtractedQuantities() {
+    subtractedQuantities.clear();
+    matchingItemNos.clear();
+    groupedItems.clear(); // Clear the grouped items
+
+    if (reItemsNo.isNotEmpty && Noss.isNotEmpty) {
+      List<String> itemsNoList = reItemsNo.split(', ');
+      List<String> nosList = Noss.split(', ');
+      List<String> qtySoldList = reSold.split(', '); // Fetch qtySold values
+
+      for (String itemNo in itemsNoList) {
+        int qtyReceived = int.tryParse(getQtyReceived(itemNo)) ?? 0;
+        int qtySoldIndex = nosList.indexOf(itemNo);
+
+        if (qtySoldIndex != -1 && qtySoldIndex < qtySoldList.length) {
+          int qtySold = int.tryParse(qtySoldList[qtySoldIndex]) ?? 0;
+          int subtractedQty = qtyReceived - qtySold;
+
+          // Group the items by Item No and combine the Return Quantity
+          //  int subtractedQty = qtyReceived - qtySold;
+          if (groupedItems.containsKey(itemNo)) {
+            groupedItems[itemNo] = (groupedItems[itemNo] ?? 0) +
+                subtractedQty; // Add a null check here
+          } else {
+            groupedItems[itemNo] = subtractedQty;
+          }
+        } else {
+          // Item is unmatched, add it to unmatchedItemNos
+          unmatchedItemNos.add(itemNo);
+        }
+      }
+
+      // Extract grouped items back to lists
+      for (var item in groupedItems.entries) {
+        matchingItemNos.add(item.key);
+        subtractedQuantities.add(item.value);
+      }
+    }
+  }
+
+  void findAndHideRepeatingItems(List<transferLineModel> items) {
+    Set<String> seenItems = Set<String>();
+    List<String> repeatingItems = [];
+
+    // Check for repeating items in matchingItemNos
+    for (String itemNo in matchingItemNos) {
+      if (seenItems.contains(itemNo)) {
+        repeatingItems.add(itemNo);
+      } else {
+        seenItems.add(itemNo);
+      }
+    }
+
+    // Check for repeating items in unmatchedItemNos
+    for (String itemNo in unmatchedItemNos) {
+      if (seenItems.contains(itemNo)) {
+        repeatingItems.add(itemNo);
+      } else {
+        seenItems.add(itemNo);
+      }
+    }
+
+    // Hide repeating items
+    hiddenItems.addAll(repeatingItems);
+    setState(() {});
+  }
+
+  void deleteItem1(int index) {
+    String currentItemNo;
+
+    if (index < matchingItemNos.length) {
+      // Display matched item
+      currentItemNo = matchingItemNos[index];
+    } else {
+      // Display unmatched item
+      int unmatchedIndex = index - matchingItemNos.length;
+      currentItemNo = unmatchedItemNos[unmatchedIndex];
+    }
+
+    // Check if ITMZ contains currentItemNo
+    if (ITMZ.contains(currentItemNo)) {
+      setState(() {
+        // Remove the item from the corresponding list
+        if (index < matchingItemNos.length) {
+          matchingItemNos.removeAt(index);
+        } else {
+          unmatchedItemNos.removeAt(index - matchingItemNos.length);
+        }
+      });
+    }
+  }
+
+  Map<String, String> transferFromCodes = {};
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text("Return Items"),
-        actions: [],
-      ),
-      body: Column(
-        children: [
-          // Display matched and unmatched ItemNos and quantities
-          ListView.builder(
-            shrinkWrap: true,
-            itemCount:
-                (matchingItemNos.isNotEmpty ? matchingItemNos.length : 1) +
-                    (unmatchedItemNos.isNotEmpty ? unmatchedItemNos.length : 1),
-            itemBuilder: (BuildContext context, int index) {
-              if (matchingItemNos.isEmpty && unmatchedItemNos.isEmpty) {
-                // Display a message when the list is empty
-                return ListTile(
-                  title: Text('No items to return'),
-                  // subtitle: Text('Add items to the return list.'),
-                );
-              }
-
-              if (index <
-                  (matchingItemNos.isNotEmpty ? matchingItemNos.length : 1)) {
-                // Display matched item
-                return ListTile(
-                  title: Text(
-                    'Item No: ${matchingItemNos[index]}',
-                    style:
-                        TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    'Return Quantity: ${subtractedQuantities[index]}',
-                    style: TextStyle(fontSize: 14.0),
-                  ),
-                );
-              } else {
-                // Display unmatched item
-                int unmatchedIndex = index -
-                    (matchingItemNos.isNotEmpty ? matchingItemNos.length : 1);
-                return ListTile(
-                  title: Text(
-                    ' Item No: ${unmatchedItemNos[unmatchedIndex]}',
-                    style:
-                        TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    'Return Quantity: ${getQtyReceived(unmatchedItemNos[unmatchedIndex])}',
-                    style: TextStyle(fontSize: 14.0),
-                  ),
-                );
-              }
-            },
+        title: Text("Daily Return Items"),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 25.0),
+            child: IconButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => nonReturnedItemHistory(
+                                rc: widget.rc.toString(),
+                              )));
+                },
+                icon: Icon(Icons.history)),
           )
         ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Container(
+            //   child: ListView.builder(
+            //       shrinkWrap: true,
+            //       physics: NeverScrollableScrollPhysics(),
+            //       itemCount: matchingItemNos.length + unmatchedItemNos.length,
+            //       itemBuilder: (BuildContext context, int index) {
+            //         if (matchingItemNos.isEmpty && unmatchedItemNos.isEmpty) {
+            //           // Display a message when the list is empty
+            //           return ListTile(
+            //             title: Text('No items to be Return'),
+            //           );
+            //         }
+
+            //         Widget deleteButton = IconButton(
+            //           icon: Icon(Icons.delete, color: Colors.red),
+            //           onPressed: () {
+            //             deleteItem(index);
+            //           },
+            //         );
+
+            //         String currentItemNo;
+            //         String transferFromCode;
+            //         if (index < matchingItemNos.length) {
+            //           // Display matched item
+            //           currentItemNo = matchingItemNos[index];
+            //           transferFromCode =
+            //               transferFromCodes[currentItemNo] ?? 'Not available';
+            //           return ListTile(
+            //             title: Text(
+            //               'Item No: $currentItemNo',
+            //               style: TextStyle(
+            //                 fontSize: 16.0,
+            //                 fontWeight: FontWeight.bold,
+            //                 // color: getItemColor(matchingItemNos[index])
+            //               ),
+            //             ),
+            //             subtitle: Text(
+            //               'Return Quantity: ${subtractedQuantities[index]}',
+            //               style: TextStyle(fontSize: 14.0),
+            //             ),
+            //             trailing: deleteButton,
+            //           );
+            //         } else {
+            //           // Display unmatched item
+            //           int unmatchedIndex = index - matchingItemNos.length;
+            //           currentItemNo = unmatchedItemNos[unmatchedIndex];
+            //           return ListTile(
+            //             title: Text(
+            //               ' Item No: $currentItemNo',
+            //               style: TextStyle(
+            //                 fontSize: 16.0,
+            //                 fontWeight: FontWeight.bold,
+            //                 // color: getItemColor(unmatchedItemNos[unmatchedIndex]),
+            //               ),
+            //             ),
+            //             subtitle: Text(
+            //               'Return Quantity: ${getQtyReceived(unmatchedItemNos[unmatchedIndex])}',
+            //               style: TextStyle(fontSize: 14.0),
+            //             ),
+            //             trailing: deleteButton,
+            //           );
+            //         }
+            //       }),
+            // ),
+            Container(
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: matchingItemNos.length + unmatchedItemNos.length,
+                itemBuilder: (BuildContext context, int index) {
+                  if (matchingItemNos.isEmpty && unmatchedItemNos.isEmpty) {
+                    // Display a message when the list is empty
+                    return ListTile(
+                      title: Text('No items to return'),
+                    );
+                  }
+
+                  Widget deleteButton = IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      deleteItem(index);
+                    },
+                  );
+
+                  String currentItemNo;
+
+                  if (index < matchingItemNos.length) {
+                    // Display matched item
+                    currentItemNo = matchingItemNos[index];
+                  } else {
+                    // Display unmatched item
+                    int unmatchedIndex = index - matchingItemNos.length;
+                    currentItemNo = unmatchedItemNos[unmatchedIndex];
+                  }
+
+                  bool shouldHideItem = ITMZ.contains(currentItemNo);
+
+                  return shouldHideItem
+                      ? Container()
+                      : ListTile(
+                          title: Text(
+                            'Item No: $currentItemNo',
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: index < matchingItemNos.length
+                              ? Text(
+                                  'Return Quantity: ${subtractedQuantities[index]}',
+                                  style: TextStyle(fontSize: 14.0),
+                                )
+                              : Text(
+                                  'Return Quantity: ${getQtyReceived(unmatchedItemNos[index - matchingItemNos.length])}',
+                                  style: TextStyle(fontSize: 14.0),
+                                ),
+                          trailing: deleteButton,
+                        );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
       floatingActionButton:
           (matchingItemNos.isNotEmpty || unmatchedItemNos.isNotEmpty)
               ? FloatingActionButton.extended(
                   onPressed: () {
-                    _getTransferHeader();
-                    // sendReturnItems(); // Call the function when the button is pressed
+                    _getTransferHeader(
+                        transferFromCodes[transferFromCodes] ?? "KT");
+                    // sendReturnItems();
+                    // Call the function when the button is pressed
                   },
                   backgroundColor: Colors.black,
                   label: Text(
@@ -168,8 +392,11 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
+          //  "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/QuantityReceivedAPI?" +
+          //       "\$filter=Transfer_to_Code eq '${widget.rc}' and Receipt_Date eq ${now.year}-10-26"),
+
           "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/QuantityReceivedAPI?" +
-              "\$filter=Transfer_to_Code eq '${widget.responsibilityCenter}' and Receipt_Date eq ${now.year}-${now.month}-${now.day}"),
+              "\$filter=Transfer_to_Code eq '${widget.rc}' and Receipt_Date eq ${now.year}-${now.month}-${now.day}"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
         'Content-Type': 'application/json',
@@ -195,6 +422,8 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
       String transferto =
           responseJson["value"][0]["Transfer_from_Code"].toString();
 
+      String Qrd = responseJson["value"][0]["Receipt_Date"].toString();
+
       // helper.alertDialogNoTitle(resCenter, context);
 
       for (var item in responseJson["value"]) {
@@ -203,6 +432,8 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
       }
       for (var item in responseJson["value"]) {
         String itemNo = item["Item_No"].toString();
+        String transferFromCode = item["Transfer_from_Code"].toString();
+        transferFromCodes[itemNo] = transferFromCode;
         itemNos.add(itemNo);
       }
 
@@ -227,7 +458,7 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
 
   // ... (rest of your code remains the same)
 
-  Future<void> _getTransferHeader() async {
+  Future<void> _getTransferHeader(String transferFromCode) async {
     SimpleFontelicoProgressDialog progressDialog =
         SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
     progressDialog.show(
@@ -249,14 +480,14 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
             },
             body: jsonEncode(<String, String>{
               //"userTypeId": "c2900cf4-d6a1-4115-b2e6-d051844b418f"//
-              "Transfer_from_Code": widget.responsibilityCenter.toString(),
-              "Transfer_to_Code": transferToo.toString(),
-
+              "Transfer_from_Code": widget.rc.toString(),
+              // "Transfer_from_Code": "SAL2",
+              "Transfer_to_Code": transferFromCode,
               // "Transfer_to_Code": "KT",
-              "Posting_Date": "${now.year}-${now.month}-07",
+              "Posting_Date": "${now.year}-${now.month}-${now.day}",
               "Assigned_User_ID": UserName.toString(),
               "In_Transit_Code": "OUT- LOG",
-              "POS_Status": "Shipped",
+              "POS_Status": "Returned",
             }))
         .catchError((err) {
       progressDialog.hide();
@@ -271,12 +502,17 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
       progressDialog.hide();
 
       String No = responseJson["No"].toString();
+      String POS_Status = responseJson["POS_Status"].toString();
+
+      helper.alertDialogNoTitle(No, context);
+      // sendReturnItems();
       //   Timer(Duration(seconds: 1), () {
 
       //   setState(() {});
       // });
       setState(() {
         THNo = No.toString();
+        POS_Statuss = POS_Status.toString();
         sendReturnItems();
       });
 
@@ -291,9 +527,9 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
       // helper.flushBar2("Success", " Successful", context);
     } else {
       progressDialog.hide();
-      helper.flushBar2("Error", 'Try again Later ', context);
+      // helper.flushBar2("Error", response.body, context);
 
-      // helper.alertDialogNoTitle(response.body, context);
+      helper.alertDialogNoTitle(response.body, context);
     }
   }
 
@@ -324,6 +560,7 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
               "Document_No": THNo.toString(),
               "Item_No": itemNo, // Use the itemNo parameter here
               "Quantity": quantity,
+              // "POS_Status": POS_Statuss.toString()
               // Use the quantity parameter here as an int
             }))
         .catchError((err) {
@@ -337,20 +574,12 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
 
     if (response.statusCode == 201) {
       progressDialog.hide();
-      // await Navigator.push(
-      //     context, MaterialPageRoute(builder: (context) => statics()));
-
-      // helper.alertDialogNoTitle(response.body, context);
-
-      // helper.flushBar2("Successful", "Items Returned Successfully", contextR;
     } else {
       progressDialog.hide();
       // helper.flushBar2("Error", response.body, context);
       helper.alertDialogNoTitle(response.body, context);
     }
   }
-// //
-  // ... (Rest of your code remains the same)
 
   Future<void> QSold() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -367,7 +596,7 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
     final response = await http.get(
       Uri.parse(
           "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/QuantitySoldAPI?" +
-              "\$filter=Location eq '${widget.responsibilityCenter}' and Posting_Date eq ${now.year}-${now.month}-${now.day}"),
+              "\$filter=Location eq '${widget.rc}' and Posting_Date eq ${now.year}-${now.month}-${now.day}"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
         'Content-Type': 'application/json',
@@ -402,6 +631,8 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
       String NosString = NoS.join(', ');
       String quantitiesString1 = quantities1.join(', ');
 
+      //helper.alertDialogNoTitle(response.body, cont)
+
       setState(() {
         reSold = quantitiesString1;
         Noss = NosString;
@@ -417,8 +648,6 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
       // helper.alertDialogNoTitle(response.body, context);
     }
   }
-
-  // ... (Rest of your code remains the same)
 
   void fetchQtyReceivedValues() {
     qtyReceivedList.clear();
@@ -447,33 +676,6 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
         if (nosList.contains(itemNo)) {
           int index = nosList.indexOf(itemNo);
           qtySoldList.add(reSold.split(', ')[index]);
-        }
-      }
-    }
-  }
-
-  void calculateSubtractedQuantities() {
-    subtractedQuantities.clear();
-    matchingItemNos.clear();
-
-    if (reItemsNo.isNotEmpty && Noss.isNotEmpty) {
-      List<String> itemsNoList = reItemsNo.split(', ');
-      List<String> nosList = Noss.split(', ');
-      List<String> qtySoldList = reSold.split(', '); // Fetch qtySold values
-
-      for (String itemNo in itemsNoList) {
-        int qtyReceived = int.tryParse(getQtyReceived(itemNo)) ?? 0;
-        int qtySoldIndex = nosList.indexOf(itemNo);
-
-        if (qtySoldIndex != -1 && qtySoldIndex < qtySoldList.length) {
-          int qtySold = int.tryParse(qtySoldList[qtySoldIndex]) ?? 0;
-          int subtractedQty = qtyReceived - qtySold;
-          subtractedQuantities.add(subtractedQty);
-
-          matchingItemNos.add(itemNo);
-        } else {
-          // Item is unmatched, add it to unmatchedItemNos
-          unmatchedItemNos.add(itemNo);
         }
       }
     }
@@ -514,8 +716,6 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
     }
 
     progressDialog.hide();
-
-    // Show a success message
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -525,7 +725,9 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                // Navigator.of(context).pop();
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => MyNevBar()));
               },
               child: Text("OK"),
             ),
@@ -533,5 +735,67 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
         );
       },
     );
+  }
+
+  Future<void> QRecieve11() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String Location_Code = (prefs.getString('Location_Code') ?? '');
+    SimpleFontelicoProgressDialog progressDialog =
+        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    progressDialog.show(
+      message: "Loading ...",
+    );
+
+    String basicAuth = 'Basic ' +
+        base64Encode(
+            utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
+    final response = await http.get(
+      Uri.parse(ApiUrl.TransferLineAPI),
+      headers: {
+        'Content': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': '$basicAuth',
+        "Access-Control-Allow-Origin": "*",
+      },
+    ).catchError((err) {
+      progressDialog.hide();
+      helper.alertDialogTitle('${Helper.errorMessageOops}',
+          '${Helper.errorMessageSomethingWentWrong}', context);
+    });
+
+    if (response.statusCode == 200) {
+      progressDialog.hide();
+      final responseJson = jsonDecode(response.body);
+
+      List<String> itemNos = [];
+      List<String> UID = [];
+
+      for (var item in responseJson["value"]) {
+        String itemNo = item["Item_No"].toString();
+        String assignedUserId = item["Assigned_User_ID"].toString();
+        String receipt_Date = item["Receipt_Date"].toString();
+
+        String Completely_Shipped = item["Completely_Shipped"].toString();
+
+        if (assignedUserId == UserName &&
+                receipt_Date == "${now.year}-${now.month}-${now.day}" &&
+                Completely_Shipped == "false" ||
+            Completely_Shipped == "true") {
+          itemNos.add(itemNo);
+        }
+      }
+
+      String itemNosString = itemNos.join(', ');
+
+      setState(() {
+        ITMZ = itemNosString;
+        QRecieve();
+        QSold();
+      });
+    } else {
+      progressDialog.hide();
+      helper.flushBar2("Error", 'Error submitting. Try again Later', context);
+    }
   }
 }

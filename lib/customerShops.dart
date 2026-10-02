@@ -4,6 +4,7 @@ import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:nav_pos/apiHelper.dart';
+import 'package:nav_pos/bottomNavigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'API.dart';
 import 'Models/customerModel.dart';
@@ -87,212 +88,231 @@ class _customerShopsPageState extends State<customerShopsPage> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          "Customers",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: Container(
-              height: 40,
-              width: 170, // Adjust the width as needed
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(width: 1.0, color: Colors.grey),
-              ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: _searchPressed,
-                decoration: InputDecoration(
-                  hintText: 'Search...',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(10),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: Container(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 10,
-                ),
-                FutureBuilder(
-                  future: _func,
-                  builder: (context, data) {
-                    if (data.hasError) {
-                      return Center(
-                          child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text("Oops!! 😔"),
-                          Text("Failed"),
-                          AlertDialog(
-                            title: Text("Customer Not Found"),
-                            content: Text(
-                                "The customer with ID ${widget.Id} cannot be found / is not assined to your Account."),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text("OK"),
-                              ),
-                            ],
-                          )
-                        ],
-                      ));
-                    } else if (data.hasData) {
-                      return ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: _filteredCustomerList.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => customerProfile(
-                                        customerId: _filteredCustomerList[index]
-                                            .No
-                                            .toString(),
-                                        balance: '',
-                                        balanceDue: '',
-                                        blocked: _filteredCustomerList[index]
-                                            .Blocked
-                                            .toString(),
-                                        email: _filteredCustomerList[index]
-                                            .E_Mail
-                                            .toString(),
-                                        homePage: _filteredCustomerList[index]
-                                            .Home_Page
-                                            .toString(),
-                                        name: _filteredCustomerList[index]
-                                            .Name
-                                            .toString(),
-                                        no: _filteredCustomerList[index]
-                                            .No
-                                            .toString(),
-                                        phoneNumber:
-                                            _filteredCustomerList[index]
-                                                .Phone_No
-                                                .toString(),
-                                        picture: _filteredCustomerList[index]
-                                            .Picture
-                                            .toString(),
-                                        primaryContacNo:
-                                            _filteredCustomerList[index]
-                                                .Primary_Contact_No
-                                                .toString(),
-                                        responsibilityCenter:
-                                            _filteredCustomerList[index]
-                                                .Responsibility_Center
-                                                .toString(),
-                                        salespersonCode:
-                                            _filteredCustomerList[index]
-                                                .Salesperson_Code
-                                                .toString(),
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  height: 70,
-                                  child: Card(
-                                    color: Colors.white,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 8.0, right: 8),
-                                      child: Row(children: [
-                                        Icon(
-                                          Icons.store,
-                                          color: Colors.grey,
-                                        ),
-                                        SizedBox(
-                                          width: 25,
-                                        ),
-                                        Text(
-                                          _filteredCustomerList[index]
-                                              .Name
-                                              .toString(),
-                                          style: TextStyle(fontSize: 19),
-                                        ),
-                                        Spacer(),
-                                        Text(
-                                          _filteredCustomerList[index]
-                                              .No
-                                              .toString(),
-                                          style: TextStyle(fontSize: 15),
-                                        )
-                                      ]),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          });
-                    } else {
-                      return Center(
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              height: 60,
-                            ),
-                            Container(
-                                height: 140,
-                                child: Center(
-                                  child: Column(
-                                    children: [
-                                      CircularProgressIndicator(),
-                                      Text("Loading Please wait....")
-                                    ],
-                                  ),
-                                )),
-                          ],
-                        ),
-                      );
-                    }
-                  },
-                ),
-                SizedBox(
-                  height: 60,
-                )
-              ],
-            ),
-          ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => RegisterCustomerPage(
-                        responsC: widget.responsC.toString(),
-                      )));
-        },
-        backgroundColor: Colors.black,
-        child: Icon(
-          Icons.add,
-          color: Colors.white,
-        ),
+  Future<bool> _onBackPressed() {
+    // Handle the back button press here
+    // You can navigate back to the login page or perform any other action
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MyNevBar(), // Replace with your login page widget
       ),
     );
+    return Future.value(false); // Prevent the app from quitting
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+        onWillPop: _onBackPressed,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(
+              "Customers",
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            centerTitle: true,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Container(
+                  height: 40,
+                  width: 170, // Adjust the width as needed
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(width: 1.0, color: Colors.grey),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _searchPressed,
+                    decoration: InputDecoration(
+                      hintText: 'Search...',
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(10),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          body: RefreshIndicator(
+            onRefresh: _refreshData,
+            child: Container(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 10,
+                    ),
+                    FutureBuilder(
+                      future: _func,
+                      builder: (context, data) {
+                        if (data.hasError) {
+                          return Center(
+                              child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text("Oops!! 😔"),
+                              Text("Failed"),
+                              AlertDialog(
+                                title: Text("Customer Not Found"),
+                                content: Text(
+                                    "The customer with ID ${widget.Id} cannot be found / is not assined to your Account."),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: Text("OK"),
+                                  ),
+                                ],
+                              )
+                            ],
+                          ));
+                        } else if (data.hasData) {
+                          return ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemCount: _filteredCustomerList.length,
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => customerProfile(
+                                            customerId:
+                                                _filteredCustomerList[index]
+                                                    .No
+                                                    .toString(),
+                                            balance: '',
+                                            balanceDue: '',
+                                            blocked:
+                                                _filteredCustomerList[index]
+                                                    .Blocked
+                                                    .toString(),
+                                            email: _filteredCustomerList[index]
+                                                .E_Mail
+                                                .toString(),
+                                            homePage:
+                                                _filteredCustomerList[index]
+                                                    .Home_Page
+                                                    .toString(),
+                                            name: _filteredCustomerList[index]
+                                                .Name
+                                                .toString(),
+                                            no: _filteredCustomerList[index]
+                                                .No
+                                                .toString(),
+                                            phoneNumber:
+                                                _filteredCustomerList[index]
+                                                    .Phone_No
+                                                    .toString(),
+                                            picture:
+                                                _filteredCustomerList[index]
+                                                    .Picture
+                                                    .toString(),
+                                            primaryContacNo:
+                                                _filteredCustomerList[index]
+                                                    .Primary_Contact_No
+                                                    .toString(),
+                                            responsibilityCenter:
+                                                _filteredCustomerList[index]
+                                                    .Responsibility_Center
+                                                    .toString(),
+                                            salespersonCode:
+                                                _filteredCustomerList[index]
+                                                    .Salesperson_Code
+                                                    .toString(),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      height: 70,
+                                      child: Card(
+                                        color: Colors.white,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 8.0, right: 8),
+                                          child: Row(children: [
+                                            Icon(
+                                              Icons.store,
+                                              color: Colors.grey,
+                                            ),
+                                            SizedBox(
+                                              width: 25,
+                                            ),
+                                            Text(
+                                              _filteredCustomerList[index]
+                                                  .Name
+                                                  .toString(),
+                                              style: TextStyle(fontSize: 19),
+                                            ),
+                                            Spacer(),
+                                            Text(
+                                              _filteredCustomerList[index]
+                                                  .No
+                                                  .toString(),
+                                              style: TextStyle(fontSize: 15),
+                                            )
+                                          ]),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              });
+                        } else {
+                          return Center(
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  height: 60,
+                                ),
+                                Container(
+                                    height: 140,
+                                    child: Center(
+                                      child: Column(
+                                        children: [
+                                          CircularProgressIndicator(),
+                                          Text("Loading Please wait....")
+                                        ],
+                                      ),
+                                    )),
+                              ],
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    SizedBox(
+                      height: 60,
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => RegisterCustomerPage(
+                            responsC: widget.responsC.toString(),
+                          )));
+            },
+            backgroundColor: Colors.black,
+            child: Icon(
+              Icons.add,
+              color: Colors.white,
+            ),
+          ),
+        ));
   }
 
   Future<List<customerModel>> _getItems1() async {

@@ -162,7 +162,7 @@ class _TransferToRecieveState extends State<TransferToRecieve> {
                                                           Padding(
                                                             padding:
                                                                 const EdgeInsets
-                                                                        .only(
+                                                                    .only(
                                                                     left: 10),
                                                             child: Text(
                                                               items[index]
@@ -264,7 +264,7 @@ class _TransferToRecieveState extends State<TransferToRecieve> {
                                                           Padding(
                                                             padding:
                                                                 const EdgeInsets
-                                                                        .only(
+                                                                    .only(
                                                                     right: 8.0),
                                                             child: Text(
                                                               items[index]

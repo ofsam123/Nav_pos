@@ -1,13 +1,12 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:nav_pos/trackDeatails.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'API.dart';
 import 'Models/visitationModel.dart';
-import 'apiHelper.dart';
 
 class trackVisitation extends StatefulWidget {
   const trackVisitation({super.key});
@@ -17,47 +16,44 @@ class trackVisitation extends StatefulWidget {
 }
 
 class _trackVisitationState extends State<trackVisitation> {
-  final Helper helper = new Helper();
+  late Future<List<VisitationModel>> _visitsFuture;
 
-  late Future<List<VisitationModel>> _func;
+  // null means "All dates"
+  DateTime? _selectedDate;
 
   @override
   void initState() {
-    _func = _getItems1();
-    _getUserData();
-    Timer(Duration(seconds: 1), () {
-      setState(() {
-        _func = _getItems1();
-        // SearchController.text = widget.drugName!;
-        // loadSharedPref();
-      });
-    });
     super.initState();
+    _visitsFuture = _getVisits();
   }
 
-  String? token;
-  String? userTypeId;
-  String? UserName;
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  _getUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    token = (prefs.getString('token') ?? '');
-    UserName = (prefs.getString('User_Name') ?? '');
-
-    Timer(Duration(seconds: 0), () {
-      setState(() {});
+  Future<void> _refresh() async {
+    final future = _getVisits();
+    setState(() {
+      _visitsFuture = future;
     });
+    await future;
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? now,
+      firstDate: DateTime(2020),
+      lastDate: now,
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(
@@ -66,266 +62,159 @@ class _trackVisitationState extends State<trackVisitation> {
         ),
         automaticallyImplyLeading: false,
         centerTitle: true,
-      ),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              FutureBuilder(
-                future: _func,
-                builder: (context, data) {
-                  if (data.hasError) {
-                    return Center(
-                        child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text("Oops!! 😔"),
-                        Text("Failed later"),
-                      ],
-                    ));
-                  } else if (data.hasData) {
-                    var items = data.data as List<VisitationModel>;
-                    return ListView.builder(
-                        itemCount: items == null ? 0 : items.length,
-                        physics: ClampingScrollPhysics(),
-                        shrinkWrap: true,
-                        scrollDirection: Axis.vertical,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.all(2),
-                            child: GestureDetector(
-                              onTap: () {
-                                // showDialog<void>(
-                                //   context: context,
-                                //   // barrierDismissible:
-                                //   //     false, // user must tap button!
-                                //   builder: (BuildContext context) {
-                                //     return AlertDialog(
-                                //       // <-- SEE HERE
-                                //       title: const Text('Visitation Details'),
-                                //       content: SingleChildScrollView(
-                                //         child: Column(
-                                //           children: const <Widget>[
-                                //             Text(""),
-                                //           ],
-                                //         ),
-                                //       ),
-                                //       actions: <Widget>[
-                                //         TextButton(
-                                //           child: const Text('No'),
-                                //           onPressed: () {
-                                //             Navigator.of(context).pop();
-                                //           },
-                                //         ),
-                                //         TextButton(
-                                //           child: const Text('Yes'),
-                                //           onPressed: () {
-                                //             Navigator.of(context).pop();
-                                //           },
-                                //         ),
-                                //       ],
-                                //     );
-                                //   },
-                                // );
-
-                                Navigator.push(
-                                    context,
-                                    (MaterialPageRoute(
-                                        builder: ((context) =>
-                                            visitationDeatils(
-                                              date:
-                                                  items[index].Date.toString(),
-                                              id: items[index]
-                                                  .CustomerID
-                                                  .toString(),
-                                              latitude: items[index]
-                                                  .Latitude
-                                                  .toString(),
-                                              longitue: items[index]
-                                                  .Longitute
-                                                  .toString(),
-                                              name: items[index]
-                                                  .Customer_Name
-                                                  .toString(),
-                                              userId: items[index]
-                                                  .UserID
-                                                  .toString(),
-                                              time:
-                                                  items[index].Time.toString(),
-                                            )))));
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  // boxShadow: [
-                                  //   BoxShadow(
-                                  //     color: Colors.grey,
-                                  //     offset: const Offset(
-                                  //       5.0,
-                                  //       5.0,
-                                  //     ),
-                                  //     blurRadius: 100.0,
-                                  //     spreadRadius: 2.0,
-                                  //   ),
-                                  // ],
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                width: MediaQuery.of(context).size.width / 1.1,
-                                child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        right: 10.0, top: 7),
-                                    child: Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 20, right: 20, top: 05),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                items[index].Date.toString(),
-                                                style: TextStyle(
-                                                    color: Colors.grey),
-                                              ),
-                                              Container(
-                                                height: 100,
-                                                decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            15),
-                                                    color: Colors.white),
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                      .only(
-                                                                  left: 8.0),
-                                                          child: Text(
-                                                            items[index]
-                                                                .CustomerID
-                                                                .toString(),
-                                                            style: TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    Row(
-                                                      children: [
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                      .only(
-                                                                  left: 8.0),
-                                                          child: Text(
-                                                            items[index]
-                                                                .Customer_Name
-                                                                .toString(),
-                                                            style: TextStyle(
-                                                                fontSize: 17,
-                                                                color: const Color
-                                                                        .fromARGB(
-                                                                    255,
-                                                                    71,
-                                                                    110,
-                                                                    129),
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          ),
-                                                        ),
-                                                        Spacer(),
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                      .only(
-                                                                  right: 8.0),
-                                                          child: Text(
-                                                            items[index]
-                                                                .UserID
-                                                                .toString(),
-                                                            style: TextStyle(
-                                                                color:
-                                                                    Colors.grey,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Divider()
-                                      ],
-                                    )),
-                              ),
-                            ),
-                          );
-                        });
-                  } else {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                              height: 140,
-                              child: Image.asset("assets/images/loading.gif"))
-                        ],
-                      ),
-                    );
-                  }
-                },
-              ),
-            ],
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh, color: Colors.black),
+            onPressed: _refresh,
           ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: FutureBuilder<List<VisitationModel>>(
+          future: _visitsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return _MessageView(
+                icon: Icons.cloud_off,
+                title: "Oops!! 😔",
+                message: "Failed to load visitations",
+                action: ElevatedButton(
+                  onPressed: _refresh,
+                  child: Text("Retry"),
+                ),
+              );
+            }
+
+            final visits = List<VisitationModel>.from(snapshot.data ?? []);
+            visits.sort((a, b) {
+              final aTime = a.visitedAt ?? DateTime(1900);
+              final bTime = b.visitedAt ?? DateTime(1900);
+              return bTime.compareTo(aTime);
+            });
+
+            final filtered = _selectedDate == null
+                ? visits
+                : visits
+                    .where((v) => _isSameDay(v.visitedAt, _selectedDate!))
+                    .toList();
+
+            return ListView(
+              physics: AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 32),
+              children: [
+                if (visits.isNotEmpty) ...[
+                  _CurrentVisitCard(
+                    visit: visits.first,
+                    onTap: () => _openDetails(visits.first),
+                  ),
+                  SizedBox(height: 20),
+                ],
+                _buildFilterBar(),
+                SizedBox(height: 12),
+                Text(
+                  "${filtered.length} visit${filtered.length == 1 ? '' : 's'}"
+                  "${_selectedDate == null ? '' : ' on ${_formatDay(_selectedDate!)}'}",
+                  style: TextStyle(
+                      color: Colors.grey[700], fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8),
+                if (filtered.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: _MessageView(
+                      icon: Icons.event_busy,
+                      title: "No visitations",
+                      message: _selectedDate == null
+                          ? "You have not recorded any visits yet"
+                          : "No visits recorded on ${_formatDay(_selectedDate!)}",
+                    ),
+                  )
+                else
+                  ..._buildGroupedList(filtered),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Future<List<VisitationModel>> _getItems1() async {
-    // helper.checkForInternet(context);
+  Widget _buildFilterBar() {
+    final today = DateTime.now();
+    final isAll = _selectedDate == null;
+    final isToday = !isAll && _isSameDay(_selectedDate, today);
+    final isCustom = !isAll && !isToday;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        ChoiceChip(
+          label: Text("All"),
+          selected: isAll,
+          onSelected: (_) => setState(() => _selectedDate = null),
+        ),
+        ChoiceChip(
+          label: Text("Today"),
+          selected: isToday,
+          onSelected: (_) => setState(() => _selectedDate = today),
+        ),
+        ChoiceChip(
+          avatar: Icon(Icons.calendar_today, size: 16),
+          label: Text(isCustom ? _formatDay(_selectedDate!) : "Pick date"),
+          selected: isCustom,
+          onSelected: (_) => _pickDate(),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildGroupedList(List<VisitationModel> visits) {
+    final widgets = <Widget>[];
+    String? currentHeader;
+    for (final visit in visits) {
+      final header =
+          visit.visitedAt == null ? "Unknown date" : _formatDay(visit.visitedAt!);
+      if (header != currentHeader) {
+        currentHeader = header;
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(top: 12, bottom: 6),
+          child: Text(
+            header,
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[600]),
+          ),
+        ));
+      }
+      widgets.add(_VisitCard(visit: visit, onTap: () => _openDetails(visit)));
+    }
+    return widgets;
+  }
+
+  void _openDetails(VisitationModel visit) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => visitationDeatils(visit: visit)),
+    );
+  }
+
+  Future<List<VisitationModel>> _getVisits() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    //  String auth = (prefs.getString('auth') ?? '');
+    String userName = prefs.getString('User_Name') ?? '';
 
-    // String UserName = (prefs.getString('User_Name') ?? '');
-
-    // SimpleFontelicoProgressDialog progressDialog =
-    //     SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
-    // progressDialog.show(
-    //   message: "loading ...",
-    // );
     String basicAuth = 'Basic ' +
         base64Encode(
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/VisitationAPI?\$filter=UserID eq " +
-              "'" +
-              UserName.toString() +
-              "'"),
+          ApiUrl.VisitationApi + "?\$filter=UserID eq " + "'" + userName + "'"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
         'Content-Type': 'application/json',
@@ -333,28 +222,306 @@ class _trackVisitationState extends State<trackVisitation> {
         'Authorization': '$basicAuth',
         "Access-Control-Allow-Origin": "*",
       },
-    ).catchError((err) {
-      //progressDialog.hide();
-      // progressDialog.hide();
-      helper.alertDialogTitle('${Helper.errorMessageOops}',
-          '${Helper.errorMessageSomethingWentWrong}', context);
-      // helper.alertDialogTitle('${Helper.errorMessageOops}', '${err.toString()}', context);
-    });
-//
-    if (response.statusCode == 200) {
-      // progressDialog.hide();
-      final responseJson = jsonDecode(response.body);
-      String apiResponse = responseJson["value"].toString();
-      List responseList = json.decode(response.body)["value"];
-      // helper.alertDialogNoTitle(response.body, context);
-      return responseList.map((job) => VisitationModel.fromJson(job)).toList();
-      // progressDialog.hide();
-    } else {
-      // If that call was not successful, throw an error.
-      // progressDialog.hide();
+    );
 
-      helper.alertDialogNoTitle('Try again', context);
-      throw Exception('Failed to load post');
+    if (response.statusCode == 200) {
+      List responseList = json.decode(response.body)["value"];
+      return responseList.map((job) => VisitationModel.fromJson(job)).toList();
+    } else {
+      throw Exception('Failed to load visitations');
     }
+  }
+}
+
+bool _isSameDay(DateTime? a, DateTime b) =>
+    a != null && a.year == b.year && a.month == b.month && a.day == b.day;
+
+String _formatDay(DateTime date) {
+  final today = DateTime.now();
+  if (_isSameDay(date, today)) return "Today";
+  if (_isSameDay(date, today.subtract(Duration(days: 1)))) return "Yesterday";
+  return DateFormat('EEE, d MMM yyyy').format(date);
+}
+
+String _formatTime(VisitationModel visit) {
+  final visitedAt = visit.visitedAt;
+  if (visitedAt == null || (visit.Time ?? '').isEmpty) return "-";
+  return DateFormat('h:mm a').format(visitedAt);
+}
+
+String _initials(String? name) {
+  final parts = (name ?? '').trim().split(RegExp(r'\s+'));
+  final letters = parts.where((p) => p.isNotEmpty).take(2).map((p) => p[0]);
+  final result = letters.join().toUpperCase();
+  return result.isEmpty ? "?" : result;
+}
+
+class _CurrentVisitCard extends StatelessWidget {
+  const _CurrentVisitCard({required this.visit, required this.onTap});
+
+  final VisitationModel visit;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isToday = _isSameDay(visit.visitedAt, DateTime.now());
+    final outcome = visit.Outcome_of_the_visit ?? '';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color.fromRGBO(15, 86, 148, 1), Color(0xFF2E7BC4)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 12,
+              offset: Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.location_on, color: Colors.white70, size: 18),
+                SizedBox(width: 6),
+                Text(
+                  isToday ? "CURRENT VISIT" : "LAST VISIT",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                    fontSize: 12,
+                  ),
+                ),
+                Spacer(),
+                Icon(Icons.chevron_right, color: Colors.white70),
+              ],
+            ),
+            SizedBox(height: 12),
+            Text(
+              visit.Customer_Name ?? "Unknown customer",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              visit.CustomerID ?? "",
+              style: TextStyle(color: Colors.white70),
+            ),
+            SizedBox(height: 14),
+            Wrap(
+              spacing: 16,
+              runSpacing: 6,
+              children: [
+                _IconLabel(
+                  icon: Icons.event,
+                  text: visit.visitedAt == null
+                      ? "-"
+                      : _formatDay(visit.visitedAt!),
+                  color: Colors.white,
+                ),
+                _IconLabel(
+                  icon: Icons.access_time,
+                  text: _formatTime(visit),
+                  color: Colors.white,
+                ),
+                if ((visit.Visitation_Type ?? '').isNotEmpty)
+                  _IconLabel(
+                    icon: Icons.storefront,
+                    text: visit.Visitation_Type!,
+                    color: Colors.white,
+                  ),
+              ],
+            ),
+            if (outcome.isNotEmpty) ...[
+              SizedBox(height: 12),
+              Text(
+                outcome,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VisitCard extends StatelessWidget {
+  const _VisitCard({required this.visit, required this.onTap});
+
+  final VisitationModel visit;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final outcome = visit.Outcome_of_the_visit ?? '';
+    final type = visit.Visitation_Type ?? '';
+
+    return Card(
+      color: Colors.white,
+      elevation: 0,
+      margin: EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                backgroundColor: Color.fromRGBO(15, 86, 148, 0.12),
+                child: Text(
+                  _initials(visit.Customer_Name),
+                  style: TextStyle(
+                    color: Color.fromRGBO(15, 86, 148, 1),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            visit.Customer_Name ?? "Unknown customer",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromARGB(255, 71, 110, 129),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          _formatTime(visit),
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      visit.CustomerID ?? "",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                    if (type.isNotEmpty) ...[
+                      SizedBox(height: 8),
+                      Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: type.toLowerCase().contains("sales")
+                              ? Colors.green.withOpacity(0.12)
+                              : Colors.orange.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          type,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: type.toLowerCase().contains("sales")
+                                ? Colors.green[800]
+                                : Colors.orange[800],
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (outcome.isNotEmpty) ...[
+                      SizedBox(height: 8),
+                      Text(
+                        outcome,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.grey[800]),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IconLabel extends StatelessWidget {
+  const _IconLabel(
+      {required this.icon, required this.text, required this.color});
+
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color),
+        SizedBox(width: 4),
+        Text(text, style: TextStyle(color: color)),
+      ],
+    );
+  }
+}
+
+class _MessageView extends StatelessWidget {
+  const _MessageView({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.action,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 56, color: Colors.grey[400]),
+            SizedBox(height: 12),
+            Text(title,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            SizedBox(height: 4),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[600])),
+            if (action != null) ...[SizedBox(height: 16), action!],
+          ],
+        ),
+      ),
+    );
   }
 }
