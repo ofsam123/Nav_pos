@@ -16,6 +16,11 @@ class ApiUrl {
   static const String VisitationApi = MainIP + "VisitationAPI";
 
   static const String registerCustomer = MainIP + "CustomerAPI";
+  static String customerById(String customerId) =>
+      MainIP +
+      "CustomerAPI('" +
+      Uri.encodeComponent(customerId.replaceAll("'", "''")) +
+      "')";
   static const String customerAPI =
       MainIP + "CustomerAPI?" + "\$" + "filter=Responsibility_Center eq '";
   static const String SalesHeaderAPI = MainIP + "SalesHeaderAPI";

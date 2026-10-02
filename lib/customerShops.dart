@@ -227,6 +227,12 @@ class _customerShopsPageState extends State<customerShopsPage> {
                                                 _filteredCustomerList[index]
                                                     .Salesperson_Code
                                                     .toString(),
+                                            latitude:
+                                                _filteredCustomerList[index]
+                                                    .Latitude,
+                                            longitude:
+                                                _filteredCustomerList[index]
+                                                    .Longitude,
                                           ),
                                         ),
                                       );
@@ -366,6 +372,8 @@ class _customerShopsPageState extends State<customerShopsPage> {
                 responsibilityCenter:
                     foundCustomer.Responsibility_Center.toString(),
                 salespersonCode: foundCustomer.Salesperson_Code.toString(),
+                latitude: foundCustomer.Latitude,
+                longitude: foundCustomer.Longitude,
               ),
             ),
           );

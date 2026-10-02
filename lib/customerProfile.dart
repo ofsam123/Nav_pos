@@ -16,6 +16,7 @@ import 'Cart.dart';
 import 'Models/ItemsModel.dart';
 import 'bottomNavigation.dart';
 import 'customWidget.dart';
+import 'editCustomer.dart';
 
 class customerProfile extends StatefulWidget {
   customerProfile({
@@ -32,6 +33,8 @@ class customerProfile extends StatefulWidget {
     required this.phoneNumber,
     required this.email,
     required this.homePage,
+    this.latitude,
+    this.longitude,
   });
 
   String? customerId;
@@ -47,6 +50,8 @@ class customerProfile extends StatefulWidget {
   String? phoneNumber;
   String? email;
   String? homePage;
+  double? latitude;
+  double? longitude;
 
   @override
   State<customerProfile> createState() => _customerProfileState();
@@ -68,6 +73,13 @@ class _customerProfileState extends State<customerProfile> {
   var quantityController = TextEditingController(text: "1");
   final outcomeController = TextEditingController();
   final commentController = TextEditingController();
+
+  late String? _name = widget.name;
+  late String? _phoneNumber = widget.phoneNumber;
+  late String? _email = widget.email;
+  late String? _homePage = widget.homePage;
+  late double? _latitude = widget.latitude;
+  late double? _longitude = widget.longitude;
   final Helper helper = new Helper();
   String Docs_No = "";
   // late Future<List<itemsModel>> _func;
@@ -136,6 +148,34 @@ class _customerProfileState extends State<customerProfile> {
     super.initState();
   }
 
+  Future<void> _openEditCustomer() async {
+    final updated = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditCustomerPage(
+          customerId: widget.customerId.toString(),
+          name: _name,
+          phoneNumber: _phoneNumber,
+          email: _email,
+          homePage: _homePage,
+          latitude: _latitude,
+          longitude: _longitude,
+        ),
+      ),
+    );
+    if (updated == null || !mounted) return;
+
+    setState(() {
+      _name = updated["Name"];
+      _phoneNumber = updated["Phone_No"];
+      _email = updated["E_Mail"];
+      _homePage = updated["Home_Page"];
+      _latitude = updated["Latitude"];
+      _longitude = updated["Longitude"];
+    });
+    helper.flushBar2("Success", "Customer updated", context);
+  }
+
   @override
   void dispose() {
     outcomeController.dispose();
@@ -166,6 +206,10 @@ class _customerProfileState extends State<customerProfile> {
         ),
         actions: [
           IconButton(
+              tooltip: "Edit customer",
+              onPressed: _openEditCustomer,
+              icon: Icon(Icons.edit_outlined)),
+          IconButton(
               onPressed: () {
                 _Alert(context);
               },
@@ -194,7 +238,7 @@ class _customerProfileState extends State<customerProfile> {
                     Container(
                       width: 200,
                       child: Text(
-                        widget.name.toString().replaceAll("null", "Empty"),
+                        _name.toString().replaceAll("null", "Empty"),
                         style: TextStyle(
                             fontSize: 19, fontWeight: FontWeight.w400),
                         overflow: TextOverflow.ellipsis,
@@ -442,7 +486,7 @@ class _customerProfileState extends State<customerProfile> {
                           width: 20,
                         ),
                         Text(
-                          widget.name.toString().replaceAll("null", "Empty"),
+                          _name.toString().replaceAll("null", "Empty"),
                           style: TextStyle(
                               color: Colors.grey, fontWeight: FontWeight.bold),
                         ),
@@ -465,7 +509,7 @@ class _customerProfileState extends State<customerProfile> {
                           width: 20,
                         ),
                         Text(
-                          widget.phoneNumber
+                          _phoneNumber
                               .toString()
                               .replaceAll("null", "Empty"),
                           style: TextStyle(
@@ -490,7 +534,7 @@ class _customerProfileState extends State<customerProfile> {
                           width: 20,
                         ),
                         Text(
-                          widget.email.toString().replaceAll("null", "Empty"),
+                          _email.toString().replaceAll("null", "Empty"),
                           style: TextStyle(
                               color: Colors.grey, fontWeight: FontWeight.bold),
                         ),
@@ -536,7 +580,7 @@ class _customerProfileState extends State<customerProfile> {
                           width: 20,
                         ),
                         Text(
-                          widget.homePage
+                          _homePage
                               .toString()
                               .replaceAll("null", "Empty"),
                           style: TextStyle(
@@ -742,7 +786,7 @@ class _customerProfileState extends State<customerProfile> {
                 // selectedItems.cast<itemsModel>(),
                 // Docs_No.toString(),
                 customerId: widget.customerId.toString(),
-                name: widget.name.toString(),
+                name: _name.toString(),
                 responsibilityCenter: widget.responsibilityCenter.toString(),
                 salespersonCode: widget.salespersonCode.toString(),
                 selectedItems: selectedItems,
@@ -777,7 +821,7 @@ class _customerProfileState extends State<customerProfile> {
       },
       body: jsonEncode(<String, dynamic>{
         "Sell_to_Customer_No": widget.customerId.toString(),
-        "Sell_to_Customer_Name": widget.name.toString(),
+        "Sell_to_Customer_Name": _name.toString(),
         "Salesperson_Code": widget.salespersonCode.toString(),
         "Responsibility_Center": widget.responsibilityCenter.toString(),
         "Document_Type": "Order",
