@@ -2,13 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:flutter_barcode_scanner_plus/flutter_barcode_scanner_plus.dart';
 import 'package:nav_pos/apiHelper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 import 'API.dart';
 import 'customerProfile.dart';
 import 'customerShops.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class ScanQr extends StatefulWidget {
   const ScanQr({super.key});
@@ -55,135 +57,102 @@ class _ScanQrState extends State<ScanQr> {
   bool _isShow = false;
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: LayoutBuilder(builder: (context, constraint) {
-      return Container(
-        decoration: BoxDecoration(
-            // color: Color.fromRGBO(14, 45, 90, 1),
-            image: DecorationImage(
-                image: AssetImage("assets/images/loginbg3.jpg"),
-                fit: BoxFit.cover)),
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraint.maxHeight),
-            child: IntrinsicHeight(
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  // crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      height: 20,
+    return Scaffold(
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+          children: [
+            const Text(
+              "Scan",
+              style: TextStyle(
+                fontSize: 36,
+                height: 1.15,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Scan a customer's QR code to open their profile, or browse all customers assigned to you.",
+              style: const TextStyle(
+                fontSize: 15.5,
+                height: 1.4,
+                color: AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: 26),
+            AppCard(
+              onTap: _isShow ? () => scanBarcodeNormal() : null,
+              padding: const EdgeInsets.fromLTRB(20, 34, 20, 30),
+              child: Column(
+                children: [
+                  Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(32),
                     ),
-                    Container(
-                      height: 120,
-                      width: MediaQuery.of(context).size.width / 1.0,
-
-                      // width: 370,
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: Color.fromARGB(255, 198, 199, 199)
-                          // color: Color.fromRGBO(14, 54, 90, 1),
-                          // image: DecorationImage(
-                          //   image:
-                          //   // image: AssetImage("assets/images/bbn.jpg"),
-                          //   // fit: BoxFit.cover,
-                          // ),
-                          ),
-                      child: Center(
-                          child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            height: 10,
-                          ),
-                          Text(
-                            "Scan QR Code",
-                            style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 19,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                                "Scan Qr Code of the Customer to get More Info Or Click on Available Customers to see all Customers assigned. $resCenter1"),
-                          ),
-                        ],
-                      )),
-                    ),
-                    Visibility(
-                      visible: _isShow,
-                      child: GestureDetector(
-                          onTap: () {
-                            scanBarcodeNormal();
-                          },
-                          child:
-                              Image(image: AssetImage("assets/images/qr.PNG"))),
-                    ),
-                    Text("CLICK TO SCAN"),
-                    Spacer(),
-                    Visibility(
-                      visible: _isShow,
-                      child: Container(
-                        width: 250,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                          // boxShadow: [
-                          //   BoxShadow(
-                          //     color: const Color.fromARGB(255, 58, 183, 125),
-                          //     spreadRadius: 10,
-                          //     blurRadius: 20,
-                          //   ),
-                          // ],
-                        ),
-                        child: ElevatedButton(
-                          child: Container(
-                              width: double.infinity,
-                              height: 50,
-                              child: Center(
-                                  child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.store_outlined),
-                                  Spacer(),
-                                  Text("Available Customers"),
-                                  Spacer(),
-                                  Icon(Icons.arrow_forward_ios)
-                                ],
-                              ))),
-                          onPressed: () {
-                            // _loginFunc();
-
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => customerShopsPage(
-                                          Id: '',
-                                          responsC: resCenter1.toString(),
-                                        )));
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
+                    child: _isShow
+                        ? const Icon(Icons.qr_code_scanner_rounded,
+                            size: 84, color: AppColors.primary)
+                        : const Center(
+                            child: SizedBox(
+                              width: 34,
+                              height: 34,
+                              child: AppLoader(strokeWidth: 3),
                             ),
                           ),
-                        ),
-                      ),
+                  ),
+                  const SizedBox(height: 22),
+                  Text(
+                    _isShow ? "Tap to scan" : "Loading your data…",
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    "Point the camera at the customer's QR code",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 15),
+                  ),
+                  if (displayValue(resCenter1, fallback: '').isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    StatusPill(
+                      text: "Responsibility center: $resCenter1",
+                      color: AppColors.primary,
                     ),
                   ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 22),
+            Visibility(
+              visible: _isShow,
+              child: SizedBox(
+                height: 58,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => customerShopsPage(
+                                  Id: '',
+                                  responsC: resCenter1.toString(),
+                                )));
+                  },
+                  icon: const Icon(Icons.storefront_outlined),
+                  label: const Text("Available Customers"),
                 ),
               ),
             ),
-          ),
+          ],
         ),
-      );
-    }));
+      ),
+    );
   }
 
   Future scanBarcodeNormal() async {
@@ -206,10 +175,10 @@ class _ScanQrState extends State<ScanQr> {
   }
 
   Future<void> _getResponsibiltyCenter() async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
-      message: "Loading Data please wait ...",
+      message: "Loading your data ...",
     );
     String basicAuth = 'Basic ' +
         base64Encode(

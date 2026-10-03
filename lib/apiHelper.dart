@@ -4,10 +4,11 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'package:nav_pos/loginPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import 'package:http/http.dart' as http;
+
+import 'theme/app_theme.dart';
 
 class Helper {
   static const String customerCareNumber = "+233501622411";
@@ -121,80 +122,51 @@ class Helper {
   void flushBar2(String title, String msg, BuildContext context) {
     switch (title) {
       case "Success":
-        {
-          Flushbar(
-            flushbarPosition: FlushbarPosition.TOP,
-            backgroundColor: Color.fromARGB(255, 22, 61, 236),
-            duration: Duration(seconds: 3),
-            titleText: Text(
-              title,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20.0,
-                  color: Colors.white,
-                  fontFamily: "ShadowsIntoLightTwo"),
-            ),
-            messageText: Text(
-              msg,
-              style: TextStyle(
-                  fontSize: 16.0,
-                  color: Colors.white,
-                  fontFamily: "ShadowsIntoLightTwo"),
-            ),
-          ).show(context);
-        }
+        _styledFlushbar(title, msg, AppColors.success,
+                Icons.check_circle_rounded)
+            .show(context);
         break;
 
       case "Error":
-        {
-          Flushbar(
-            flushbarPosition: FlushbarPosition.TOP,
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-            titleText: Text(
-              title,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20.0,
-                  color: Colors.white,
-                  fontFamily: "ShadowsIntoLightTwo"),
-            ),
-            messageText: Text(
-              msg,
-              style: TextStyle(
-                  fontSize: 16.0,
-                  color: Colors.white,
-                  fontFamily: "ShadowsIntoLightTwo"),
-            ),
-          ).show(context);
-        }
+        _styledFlushbar(title, msg, AppColors.danger, Icons.error_rounded)
+            .show(context);
         break;
 
       case "Warning":
-        {
-          Flushbar(
-            flushbarPosition: FlushbarPosition.TOP,
-            backgroundColor: Colors.blueGrey,
-            duration: Duration(seconds: 3),
-            titleText: Text(
-              "Oops",
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20.0,
-                  color: Colors.white,
-                  fontFamily: "ShadowsIntoLightTwo"),
-            ),
-            messageText: Text(
-              msg,
-              style: TextStyle(
-                  fontSize: 16.0,
-                  color: Colors.white,
-                  fontFamily: "ShadowsIntoLightTwo"),
-            ),
-          ).show(context);
-        }
+        _styledFlushbar("Oops", msg, const Color(0xFF475569),
+                Icons.info_rounded)
+            .show(context);
         break;
     }
+  }
+
+  Flushbar _styledFlushbar(
+      String title, String msg, Color color, IconData icon) {
+    return Flushbar(
+      flushbarPosition: FlushbarPosition.TOP,
+      flushbarStyle: FlushbarStyle.FLOATING,
+      margin: EdgeInsets.all(12),
+      borderRadius: BorderRadius.circular(14),
+      backgroundColor: color,
+      duration: Duration(seconds: 3),
+      icon: Icon(icon, color: Colors.white, size: 26),
+      boxShadows: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.15),
+          blurRadius: 12,
+          offset: Offset(0, 4),
+        ),
+      ],
+      titleText: Text(
+        title,
+        style: TextStyle(
+            fontWeight: FontWeight.w600, fontSize: 15.0, color: Colors.white),
+      ),
+      messageText: Text(
+        msg,
+        style: TextStyle(fontSize: 14.0, color: Colors.white),
+      ),
+    );
   }
 
   void flushBar1(String title, String msg, BuildContext context) {

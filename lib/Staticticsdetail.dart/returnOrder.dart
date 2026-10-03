@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -14,6 +15,8 @@ import '../Models/postedInvoiceDetailsModel.dart';
 import '../Models/postedSalesInvoiceModel.dart';
 import '../Models/returnOrder.dart';
 import '../apiHelper.dart';
+import '../theme/app_theme.dart';
+import '../widgets/app_widgets.dart';
 
 class returnOrder extends StatefulWidget {
   // returnOrder({required this.docsNo});
@@ -62,138 +65,108 @@ class _returnOrderState extends State<returnOrder> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          "Return Order",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        // automaticallyImplyLeading: false,
-        centerTitle: true,
+        title: const Text("Return Order"),
       ),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              FutureBuilder(
-                future: _func,
-                builder: (context, data) {
-                  if (data.hasError) {
-                    return Center(
+      body: FutureBuilder(
+        future: _func,
+        builder: (context, data) {
+          if (data.hasError) {
+            return const EmptyState(
+              icon: Icons.cloud_off_rounded,
+              title: 'Failed to load data',
+            );
+          } else if (data.hasData) {
+            var items = data.data as List<returnOrderModel>;
+            if (items.isEmpty) {
+              return const EmptyState(
+                icon: Icons.assignment_return_outlined,
+                title: "No return orders",
+                message: "There is no data currently available",
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              itemCount: items.length + 1,
+              itemBuilder: (context, position) {
+                if (position == 0) {
+                  return SmallCapsLabel(
+                      '${items.length} ${items.length == 1 ? 'order' : 'orders'}');
+                }
+                final index = position - 1;
+                return AppCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const IconBadge(
+                        icon: Icons.assignment_return_outlined,
+                        color: AppColors.warning,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
                         child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text("Oops!! 😔"),
-                        Text("Failed later"),
-                      ],
-                    ));
-                  } else if (data.hasData) {
-                    var items = data.data as List<returnOrderModel>;
-                    if (items.isEmpty) {
-                      return Center(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("There is no data currently availble"),
-                          ],
-                        ),
-                      );
-                    }
-                    return ListView.builder(
-                        itemCount: items == null ? 0 : items.length,
-                        physics: ClampingScrollPhysics(),
-                        shrinkWrap: true,
-                        scrollDirection: Axis.vertical,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.all(2),
-                            child: GestureDetector(
-                              onTap: () {},
-                              child: Card(
-                                color: Color.fromARGB(255, 246, 246, 246),
-                                child: Column(
-                                  children: [
-                                    ListTile(
-                                      leading: Icon(Icons.numbers),
-                                      title: Text(
-                                        "NO: ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index].No.toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                    ListTile(
-                                      leading: Icon(Icons.details),
-                                      title: Text(
-                                        "Status: ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index].Status.toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                    ListTile(
-                                      leading: Icon(Icons.numbers_outlined),
-                                      title: Text(
-                                        "Items Weight: ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index].Items_Weight.toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                    ListTile(
-                                      leading: Icon(Icons.date_range),
-                                      title: Text(
-                                        "Posted Date: ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index].Posting_Date.toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                  ],
-                                ),
+                            Text(
+                              displayValue(items[index].No.toString()),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textDark,
                               ),
                             ),
-                          );
-                        });
-                  } else {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                            const SizedBox(height: 4),
+                            Text(
+                              "Posted ${displayValue(items[index].Posting_Date.toString())}",
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            StatusPill(
+                              text: displayValue(items[index].Status.toString()),
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Container(
-                              height: 140,
-                              child: Image.asset("assets/images/loading.gif"))
+                          Text(
+                            displayValue(items[index].Items_Weight.toString()),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            "Items weight",
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
                         ],
                       ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
+                    ],
+                  ),
+                );
+              },
+            );
+          } else {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 60),
+              child: Center(child: AppLoader()),
+            );
+          }
+        },
       ),
     );
   }

@@ -7,12 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:nav_pos/apiHelper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 
 import 'API.dart';
 import 'Models/ItemsModel.dart';
 import 'bottomNavigation.dart';
 import 'customerProfile.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class SelectionPage extends StatefulWidget {
   final List<itemsModel> selectedItems;
@@ -93,130 +95,506 @@ class _SelectionPageState extends State<SelectionPage> {
         "https://img.freepik.com/free-photo/wine-bottle-glass-grapes-isolated-white_167946-36.jpg?size=626&ext=jpg&ga=GA1.2.1776209590.1686836153&semt=sph"
     // Add more image URLs here
   ];
+  static const int _maxInlineUnits = 4;
+
+  int get _totalUnits => quantityControllers.fold<int>(
+      0, (sum, c) => sum + (int.tryParse(c.text) ?? 0));
+
+  void _changeQuantity(int index, int delta) {
+    final current = int.tryParse(quantityControllers[index].text) ?? 0;
+    final next = current + delta;
+    if (next < 1) return;
+    setState(() {
+      quantityControllers[index].text = next.toString();
+    });
+  }
+
+  Future<void> _pickUnit(int index) async {
+    final options = dropdownItems[index];
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        String query = '';
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final filtered = options
+                .where((o) => o.toLowerCase().contains(query.toLowerCase()))
+                .toList();
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(sheetContext).size.height * 0.75,
+              ),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+                      child: Text(
+                        "Unit of measure",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                      child: Text(
+                        "${selectedItems[index].Item_Description} · ${options.length} units",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppColors.textMuted),
+                      ),
+                    ),
+                    if (options.length > 6)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                        child: TextField(
+                          onChanged: (value) =>
+                              setSheetState(() => query = value),
+                          decoration: const InputDecoration(
+                            hintText: "Search units",
+                            prefixIcon: Icon(Icons.search_rounded),
+                          ),
+                        ),
+                      ),
+                    Flexible(
+                      child: filtered.isEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Text(
+                                "No matching units",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: AppColors.textMuted),
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                              itemCount: filtered.length,
+                              itemBuilder: (context, i) {
+                                final code = filtered[i];
+                                final isSelected =
+                                    selectedCodeMap[index] == code;
+                                return ListTile(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  selected: isSelected,
+                                  selectedTileColor: AppColors.primarySoft,
+                                  leading: Icon(
+                                    isSelected
+                                        ? Icons.radio_button_checked_rounded
+                                        : Icons.radio_button_off_rounded,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.textMuted,
+                                  ),
+                                  title: Text(
+                                    code,
+                                    style: TextStyle(
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                    ),
+                                  ),
+                                  onTap: () =>
+                                      Navigator.pop(sheetContext, code),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        selectedCodeMap[index] = picked;
+      });
+    }
+  }
+
+  Widget _buildUnitSelector(int index) {
+    final options = dropdownItems[index];
+    final selected = selectedCodeMap[index];
+
+    if (options.isEmpty) {
+      return const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: AppLoader(strokeWidth: 2),
+          ),
+          SizedBox(width: 8),
+          Text(
+            "Loading units…",
+            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+          ),
+        ],
+      );
+    }
+
+    if (options.length <= _maxInlineUnits) {
+      return Wrap(
+        spacing: 10,
+        runSpacing: 8,
+        alignment: WrapAlignment.end,
+        children: [
+          for (final code in options)
+            _UnitChip(
+              label: code,
+              selected: selected == code,
+              onTap: () {
+                setState(() {
+                  selectedCodeMap[index] = code;
+                });
+              },
+            ),
+        ],
+      );
+    }
+
+    return Material(
+      color: selected == null ? AppColors.surface : AppColors.primary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: selected == null ? const Color(0xFFD1D5DB) : AppColors.primary,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _pickUnit(index),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 9, 8, 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  selected ?? "Unit (${options.length})",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+                    color: selected == null
+                        ? AppColors.textMuted
+                        : Colors.white,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.expand_more_rounded,
+                color: selected == null ? AppColors.textMuted : Colors.white,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuantityStepper(int index) {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.only(left: 2, right: 4),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: () => _changeQuantity(index, -1),
+            icon: const Icon(Icons.remove_rounded,
+                color: AppColors.textDark, size: 22),
+          ),
+          SizedBox(
+            width: 40,
+            child: TextField(
+              keyboardType: TextInputType.number,
+              controller: quantityControllers[index],
+              onChanged: (value1) {
+                setState(() {});
+              },
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textDark,
+              ),
+              decoration: const InputDecoration(
+                hintText: "0",
+                isDense: true,
+                filled: false,
+                contentPadding: EdgeInsets.symmetric(vertical: 6),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+              ),
+            ),
+          ),
+          InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => _changeQuantity(index, 1),
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.add_rounded,
+                  color: Colors.white, size: 24),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartItem(int index) {
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.fromLTRB(14, 12, 6, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5E7EB),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.liquor_rounded,
+                    color: Color(0xFF6B7280), size: 40),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "${selectedItems[index].Item_Description}",
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        displayValue(selectedItems[index].Item_No),
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: "Remove",
+                icon: const Icon(Icons.delete_outline_rounded,
+                    color: Color(0xFFD9534F), size: 26),
+                onPressed: () {
+                  removeItem(index);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Row(
+              children: [
+                _buildQuantityStepper(index),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _buildUnitSelector(index),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Cart Items"),
-        backgroundColor: Color.fromARGB(255, 255, 255, 255),
-        elevation: 5,
-        centerTitle: true,
+        title: const Text("Checkout"),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        shape: const Border(),
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+        ),
       ),
-      body: ListView.builder(
-        itemCount: selectedItems.length,
-        itemBuilder: (context, index) {
-          int randomImageIndex =
-              Random().nextInt(randomProductImageURLs.length);
-          return Column(
-            children: [
-              ListTile(
-                leading: Container(
-                  height: 130,
-                  width: 70,
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 240, 238, 238),
-                    // image: DecorationImage(
-                    //     colorFilter: ColorFilter.mode(
-                    //       Color.fromARGB(255, 146, 144, 144).withOpacity(0.9),
-                    //       BlendMode.modulate,
-                    //     ),
-                    //     image: NetworkImage(
-                    //       randomProductImageURLs[randomImageIndex],
-                    //     ),
-                    //     fit: BoxFit.cover),
-                    borderRadius: BorderRadius.circular(10),
-                    // color: Color.fromARGB(101, 11, 117, 187)
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+        children: [
+          AppCard(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 58,
+                  height: 58,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primarySoft,
+                    shape: BoxShape.circle,
                   ),
-                  child: Center(
-                    child: Container(
-                        height: 80,
-                        // child: Image.asset("assets/images/perfume.png"),
-                        child: Icon(
-                          Icons.shopify_outlined,
-                          color: Colors.grey,
-                        )),
+                  child: Text(
+                    initialsOf(widget.name),
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-                title: Text("${selectedItems[index].Item_Description}"),
-                subtitle: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.delete,
-                        color: Colors.red,
-                      ),
-                      onPressed: () {
-                        removeItem(index);
-                      },
-                    ),
-                    SizedBox(
-                      width: 15,
-                    ),
-                    DropdownButton(
-                      hint: Text(
-                        'Select U.O.M',
-                        style: TextStyle(
-                          color: Colors.grey,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayValue(widget.name),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
                         ),
                       ),
-                      items: dropdownItems[index].map((item) {
-                        return DropdownMenuItem(
-                          value: item,
-                          child: Text(item),
-                        );
-                      }).toList(),
-                      onChanged: (newVal) {
-                        setState(() {
-                          selectedCodeMap[index] = newVal;
-                        });
-                      },
-                      value: selectedCodeMap[index],
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.customerId,
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          SmallCapsLabel("Items (${selectedItems.length})"),
+          const SizedBox(height: 4),
+          if (selectedItems.isEmpty)
+            const EmptyState(
+              icon: Icons.remove_shopping_cart_outlined,
+              title: "Your cart is empty",
+              message: "Go back and select items for this customer.",
+            )
+          else
+            for (int index = 0; index < selectedItems.length; index++)
+              _buildCartItem(index),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F1D4A).withOpacity(0.06),
+              blurRadius: 16,
+              offset: const Offset(0, -3),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 18, 22, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      "${selectedItems.length} item${selectedItems.length == 1 ? '' : 's'}",
+                      style: const TextStyle(
+                        color: AppColors.textDark,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      "$_totalUnits units",
+                      style: const TextStyle(
+                        color: AppColors.textDark,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
-                trailing: Container(
-                  width: 40,
-                  child: TextField(
-                    keyboardType: TextInputType.number,
-                    controller: quantityControllers[index],
-                    onChanged: (value1) {
-                      setState(() {
-                        // if(quantityController)
-                      });
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      _getSalesHeader();
                     },
-                    textAlign: TextAlign.center,
-                    decoration: InputDecoration(
-                      hintText: "0",
-                      border: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
+                    style: ElevatedButton.styleFrom(
+                      textStyle: const TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
+                    icon: const Icon(Icons.check_circle_outline_rounded,
+                        size: 26),
+                    label: const Text("Place Order"),
                   ),
                 ),
-              ),
-              Divider()
-            ],
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // _postSalesLine();
-          _getSalesHeader();
-        },
-        backgroundColor: Colors.black,
-        icon: Icon(
-          Icons.shopping_cart,
-          color: Colors.white,
-        ),
-        label: Text(
-          'Check Out',
-          style: TextStyle(color: Colors.white),
+              ],
+            ),
+          ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -232,8 +610,8 @@ class _SelectionPageState extends State<SelectionPage> {
   }
 
   Future<void> _postSalesLine() async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -294,8 +672,8 @@ class _SelectionPageState extends State<SelectionPage> {
   }
 
   Future<void> _getSalesHeader() async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -365,11 +743,11 @@ class _SelectionPageState extends State<SelectionPage> {
       double latitude = position.latitude;
       double longitude = position.longitude;
 
-      SimpleFontelicoProgressDialog progressDialog =
-          SimpleFontelicoProgressDialog(
+      AppLoadingDialog progressDialog =
+          AppLoadingDialog(
               context: context, barrierDimisable: true);
       progressDialog.show(
-        message: "Submiting ...",
+        message: "Submitting ...",
       );
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String User_Name = (prefs.getString('User_Name') ?? '');
@@ -420,10 +798,10 @@ class _SelectionPageState extends State<SelectionPage> {
   }
 
   Future<void> _getUnitMeasure2(int index) async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
-      message: "UM ...",
+      message: "Loading units ...",
     );
 
     if (index < 0 || index >= selectedItems.length) {
@@ -470,5 +848,48 @@ class _SelectionPageState extends State<SelectionPage> {
       helper.toastFailedNotification(Helper.errorMessageSomethingWentWrong);
       throw Exception('Failed to load post');
     }
+  }
+}
+
+class _UnitChip extends StatelessWidget {
+  const _UnitChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.primary : AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: selected ? AppColors.primary : const Color(0xFFD1D5DB),
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 72),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          alignment: Alignment.center,
+          child: Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 15,
+              letterSpacing: 0.6,
+              fontWeight: FontWeight.w600,
+              color: selected ? Colors.white : AppColors.textMuted,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

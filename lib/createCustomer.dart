@@ -6,12 +6,14 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_place_picker_mb/google_maps_place_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 import 'package:http/http.dart' as http;
 import 'API.dart';
 import 'apiHelper.dart';
 import 'bottomNavigation.dart';
 import 'customerShops.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -102,490 +104,200 @@ class _RegisterCustomerPageState extends State<RegisterCustomerPage> {
 
   String newNo = "";
 
+  Widget _fieldLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 6),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textDark,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Register Customer"),
+        title: const Text("Register Customer"),
       ),
-      body: Container(
-        decoration: BoxDecoration(),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(0.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        children: [
+          AppCard(
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 05,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 3),
-                      child: Text(
-                        resCenter.toString(),
+                const IconBadge(
+                  icon: Icons.storefront_outlined,
+                  color: AppColors.primary,
+                  size: 48,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "New customer",
                         style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textDark,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                        bottomLeft: Radius.circular(30),
-                        bottomRight: Radius.circular(30),
+                      const SizedBox(height: 2),
+                      Text(
+                        displayValue(resCenter.toString()),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: 30,
-                          ),
-                          // CircleAvatar(
-                          //   radius: 50,
-                          //   backgroundColor: Colors.grey,
-                          //   child: Center(
-                          //     child: IconButton(
-                          //       icon: Icon(Icons.add),
-                          //       onPressed: _pickImage, // Open image picker
-                          //     ),
-                          //   ),
-                          // ),
-                          // GestureDetector(
-                          //   onTap: () {
-                          //     pickImage();
-                          //   },
-                          //   child: Container(
-                          //       height: 80,
-                          //       width: 80,
-                          //       decoration: BoxDecoration(
-                          //           color: Colors.white,
-                          //           border: Border.all(
-                          //               width: 1, color: Colors.black),
-                          //           borderRadius: BorderRadius.circular(30)),
-                          //       child: Center(
-                          //         child: image != null
-                          //             ? Image.file(image!)
-                          //             : Text("+ Image"),
-                          //       )),
-                          // ),
-
-                          SizedBox(
-                            height: 20,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 20.0,
-                              right: 20,
-                            ),
-                            child: TextField(
-                              controller: userNameController,
-                              decoration: InputDecoration(
-                                suffixIcon: Icon(
-                                  Icons.store,
-                                  color: Colors.grey,
-                                ),
-                                label: Text("Customer Name"),
-                                filled: true,
-                                fillColor: Colors.blueGrey[50],
-                                labelStyle: TextStyle(fontSize: 14),
-                                contentPadding: EdgeInsets.only(left: 30),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.blueGrey,
-                                  ),
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.blueGrey,
-                                  ),
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 30),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 20.0,
-                              right: 20,
-                            ),
-                            child: TextField(
-                              controller: EmailAddressController,
-                              decoration: InputDecoration(
-                                suffixIcon: Icon(
-                                  Icons.alternate_email_outlined,
-                                  color: Colors.grey,
-                                ),
-                                label: Text("Email (opt)*"),
-                                filled: true,
-                                fillColor: Colors.blueGrey[50],
-                                labelStyle: TextStyle(fontSize: 14),
-                                contentPadding: EdgeInsets.only(left: 30),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.blueGrey,
-                                  ),
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.blueGrey,
-                                  ),
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Padding(
-                          //   padding: const EdgeInsets.only(
-                          //     left: 20.0,
-                          //     right: 20,
-                          //   ),
-                          //   child: TextField(
-                          //     keyboardType: TextInputType.number,
-                          //     maxLength: 10,
-                          //     controller: phoneController,
-                          //     decoration: InputDecoration(
-                          //       suffixIcon: Icon(
-                          //         Icons.phone_android,
-                          //         color: Colors.grey,
-                          //       ),
-                          //       label: Text("Phone Number"),
-                          //       filled: true,
-                          //       fillColor: Colors.blueGrey[50],
-                          //       labelStyle: TextStyle(fontSize: 14),
-                          //       contentPadding: EdgeInsets.only(left: 30),
-                          //       enabledBorder: OutlineInputBorder(
-                          //         borderSide: BorderSide(
-                          //           color: Colors.blueGrey,
-                          //         ),
-                          //         borderRadius: BorderRadius.circular(15),
-                          //       ),
-                          //       focusedBorder: OutlineInputBorder(
-                          //         borderSide: BorderSide(
-                          //           color: Colors.blueGrey,
-                          //         ),
-                          //         borderRadius: BorderRadius.circular(15),
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
-
-                          SizedBox(height: 20),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 20, right: 20),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  color: Color.fromARGB(255, 226, 226, 226),
-                                  borderRadius: BorderRadius.circular(20)),
-                              child: ExpansionTile(
-                                title: Text("Contacts"),
-                                children: [
-                                  SizedBox(
-                                    height: 10,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 20.0,
-                                      right: 20,
-                                    ),
-                                    child: TextField(
-                                      // keyboardType: TextInputType.number,
-                                      // maxLength: 10,
-                                      controller: contactNameController,
-                                      decoration: InputDecoration(
-                                        suffixIcon: Icon(
-                                          Icons.person,
-                                          color: Colors.grey,
-                                        ),
-                                        label: Text("Contact Name"),
-                                        filled: true,
-                                        fillColor: Colors.blueGrey[50],
-                                        labelStyle: TextStyle(fontSize: 14),
-                                        contentPadding:
-                                            EdgeInsets.only(left: 30),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: Colors.blueGrey,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: Colors.blueGrey,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: 20,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 20.0,
-                                      right: 20,
-                                    ),
-                                    child: TextField(
-                                      keyboardType: TextInputType.number,
-                                      maxLength: 10,
-                                      controller: phoneController,
-                                      decoration: InputDecoration(
-                                        suffixIcon: Icon(
-                                          Icons.phone_android,
-                                          color: Colors.grey,
-                                        ),
-                                        label: Text("Phone Number"),
-                                        filled: true,
-                                        fillColor: Colors.blueGrey[50],
-                                        labelStyle: TextStyle(fontSize: 14),
-                                        contentPadding:
-                                            EdgeInsets.only(left: 30),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: Colors.blueGrey,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: Colors.blueGrey,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  // Padding(
-                                  //   padding: const EdgeInsets.only(
-                                  //     left: 20.0,
-                                  //     right: 20,
-                                  //   ),
-                                  //   child: TextField(
-                                  //     keyboardType: TextInputType.number,
-                                  //     // maxLength: 10,
-                                  //     controller: faxNoController,
-                                  //     decoration: InputDecoration(
-                                  //       suffixIcon: Icon(
-                                  //         Icons.numbers,
-                                  //         color: Colors.grey,
-                                  //       ),
-                                  //       label: Text("Fax No"),
-                                  //       filled: true,
-                                  //       fillColor: Colors.blueGrey[50],
-                                  //       labelStyle: TextStyle(fontSize: 14),
-                                  //       contentPadding:
-                                  //           EdgeInsets.only(left: 30),
-                                  //       enabledBorder: OutlineInputBorder(
-                                  //         borderSide: BorderSide(
-                                  //           color: Colors.blueGrey,
-                                  //         ),
-                                  //         borderRadius:
-                                  //             BorderRadius.circular(15),
-                                  //       ),
-                                  //       focusedBorder: OutlineInputBorder(
-                                  //         borderSide: BorderSide(
-                                  //           color: Colors.blueGrey,
-                                  //         ),
-                                  //         borderRadius:
-                                  //             BorderRadius.circular(15),
-                                  //       ),
-                                  //     ),
-                                  //   ),
-                                  // ),
-
-                                  SizedBox(
-                                    height: 20,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 20.0,
-                                      right: 20,
-                                    ),
-                                    child: TextField(
-                                      // keyboardType: TextInputType.number,
-                                      // maxLength: 10,
-                                      controller: homePageController,
-                                      decoration: InputDecoration(
-                                        suffixIcon: Icon(
-                                          Icons.home,
-                                          color: Colors.grey,
-                                        ),
-                                        label: Text("Home Page"),
-                                        filled: true,
-                                        fillColor: Colors.blueGrey[50],
-                                        labelStyle: TextStyle(fontSize: 14),
-                                        contentPadding:
-                                            EdgeInsets.only(left: 30),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: Colors.blueGrey,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: Colors.blueGrey,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 20.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                TextButton(
-                                    onPressed: () {
-                                      showPlacePicker();
-                                    },
-                                    child: Text(
-                                      "Add Location +",
-                                      style: TextStyle(
-                                          color: Colors.blue,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 17),
-                                    )),
-                              ],
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              showPlacePicker();
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                left: 20.0,
-                                right: 20,
-                              ),
-                              child: TextField(
-                                readOnly: true,
-                                controller: passwordController,
-                                decoration: InputDecoration(
-                                  label: Text("lng & Lat"),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      Icons.location_on,
-                                      color: Colors.grey,
-                                    ),
-                                    onPressed: showPlacePicker, // Get location
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.blueGrey[50],
-                                  labelStyle: TextStyle(fontSize: 14),
-                                  contentPadding: EdgeInsets.only(left: 30),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: Colors.blueGrey,
-                                    ),
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: Colors.blueGrey,
-                                    ),
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 40),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 20.0,
-                              right: 20,
-                            ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: ElevatedButton(
-                                child: Container(
-                                  width: double.infinity,
-                                  height: 50,
-                                  child: Center(
-                                    child: Text("Register Customer"),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  _registerCustomer();
-                                  // showPlacePicker();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color.fromRGBO(15, 86, 148, 1),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Divider(
-                                  color: Colors.grey,
-                                  height: 50,
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 20),
-                                child: Text("Terms and Conditions"),
-                              ),
-                              Expanded(
-                                child: Divider(
-                                  color: Colors.grey,
-                                  height: 50,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Text(
-                              "Powered By Synergy Center",
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                          SizedBox(height: 20),
-                        ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const SmallCapsLabel("Business"),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _fieldLabel("Customer Name"),
+                TextField(
+                  controller: userNameController,
+                  decoration: const InputDecoration(
+                    hintText: "Enter customer name",
+                    prefixIcon: Icon(Icons.store_outlined),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _fieldLabel("Email (optional)"),
+                TextField(
+                  controller: EmailAddressController,
+                  decoration: const InputDecoration(
+                    hintText: "name@example.com",
+                    prefixIcon: Icon(Icons.alternate_email_outlined),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const SmallCapsLabel("Contact"),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _fieldLabel("Contact Name"),
+                TextField(
+                  controller: contactNameController,
+                  decoration: const InputDecoration(
+                    hintText: "Contact person",
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _fieldLabel("Phone Number"),
+                TextField(
+                  keyboardType: TextInputType.number,
+                  maxLength: 10,
+                  controller: phoneController,
+                  decoration: const InputDecoration(
+                    hintText: "e.g. 0241234567",
+                    prefixIcon: Icon(Icons.phone_android),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                _fieldLabel("Home Page"),
+                TextField(
+                  controller: homePageController,
+                  decoration: const InputDecoration(
+                    hintText: "www.example.com",
+                    prefixIcon: Icon(Icons.language),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              const Expanded(child: SmallCapsLabel("Location")),
+              TextButton.icon(
+                onPressed: () {
+                  showPlacePicker();
+                },
+                icon: const Icon(Icons.add_location_alt_outlined, size: 18),
+                label: const Text("Add Location"),
+              ),
+            ],
+          ),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _fieldLabel("Longitude & Latitude"),
+                GestureDetector(
+                  onTap: () {
+                    showPlacePicker();
+                  },
+                  child: TextField(
+                    readOnly: true,
+                    controller: passwordController,
+                    decoration: InputDecoration(
+                      hintText: "Tap to pick a location",
+                      prefixIcon: const Icon(Icons.place_outlined),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.location_on),
+                        onPressed: showPlacePicker, // Get location
                       ),
                     ),
                   ),
-                )
+                ),
               ],
+            ),
+          ),
+          const SizedBox(height: 28),
+          Row(
+            children: const [
+              Expanded(child: Divider()),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14),
+                child: Text(
+                  "Terms and Conditions",
+                  style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+                ),
+              ),
+              Expanded(child: Divider()),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Center(
+            child: Text(
+              "Powered By Synergy Center",
+              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                _registerCustomer();
+                // showPlacePicker();
+              },
+              icon: const Icon(Icons.person_add_alt_1_outlined),
+              label: const Text("Register Customer"),
             ),
           ),
         ),
@@ -717,11 +429,11 @@ class _RegisterCustomerPageState extends State<RegisterCustomerPage> {
         return;
       }
 
-      SimpleFontelicoProgressDialog progressDialog =
-          SimpleFontelicoProgressDialog(
+      AppLoadingDialog progressDialog =
+          AppLoadingDialog(
               context: context, barrierDimisable: true);
       progressDialog.show(
-        message: "Registring ...",
+        message: "Registering ...",
       );
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String resCenter = (prefs.getString('Sales_Resp_Ctr_Filter') ?? '');
@@ -802,10 +514,10 @@ class _RegisterCustomerPageState extends State<RegisterCustomerPage> {
   }
 
   Future<void> _profilePicture() async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
-      message: "Picture ...",
+      message: "Uploading picture ...",
     );
     SharedPreferences prefs = await SharedPreferences.getInstance();
 

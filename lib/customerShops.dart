@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:flutter_barcode_scanner_plus/flutter_barcode_scanner_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 import 'package:nav_pos/apiHelper.dart';
 import 'package:nav_pos/bottomNavigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +11,8 @@ import 'API.dart';
 import 'Models/customerModel.dart';
 import 'createCustomer.dart';
 import 'customerProfile.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class customerShopsPage extends StatefulWidget {
   customerShopsPage({required this.Id, required this.responsC});
@@ -80,9 +83,12 @@ class _customerShopsPageState extends State<customerShopsPage> {
       if (query.isEmpty) {
         _filteredCustomerList = _customerList;
       } else {
+        final q = query.toLowerCase();
         _filteredCustomerList = _customerList
             .where((customer) =>
-                customer.Name!.toLowerCase().contains(query.toLowerCase()))
+                (customer.Name ?? '').toLowerCase().contains(q) ||
+                (customer.No ?? '').toLowerCase().contains(q) ||
+                (customer.Phone_No ?? '').toLowerCase().contains(q))
             .toList();
       }
     });
@@ -100,210 +106,250 @@ class _customerShopsPageState extends State<customerShopsPage> {
     return Future.value(false); // Prevent the app from quitting
   }
 
+  void _openProfile(customerModel customer) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => customerProfile(
+          customerId: customer.No.toString(),
+          balance: '',
+          balanceDue: '',
+          blocked: customer.Blocked.toString(),
+          email: customer.E_Mail.toString(),
+          homePage: customer.Home_Page.toString(),
+          name: customer.Name.toString(),
+          no: customer.No.toString(),
+          phoneNumber: customer.Phone_No.toString(),
+          picture: customer.Picture.toString(),
+          primaryContacNo: customer.Primary_Contact_No.toString(),
+          responsibilityCenter: customer.Responsibility_Center.toString(),
+          salespersonCode: customer.Salesperson_Code.toString(),
+          latitude: customer.Latitude,
+          longitude: customer.Longitude,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 4, 20, 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: AppColors.softShadow,
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: _searchPressed,
+        textInputAction: TextInputAction.search,
+        style: const TextStyle(fontSize: 16),
+        decoration: InputDecoration(
+          hintText: 'Search name, number or phone',
+          fillColor: AppColors.surface,
+          contentPadding: const EdgeInsets.symmetric(vertical: 17),
+          prefixIcon: const Padding(
+            padding: EdgeInsets.only(left: 14, right: 8),
+            child: Icon(Icons.search_rounded, size: 26),
+          ),
+          suffixIcon: _searchController.text.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () {
+                    _searchController.clear();
+                    _searchPressed('');
+                  },
+                ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    final count = _filteredCustomerList.length;
+    final center = displayValue(widget.responsC, fallback: '');
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 4, 20, 14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            IconButton(
+              tooltip: "Back",
+              onPressed: _onBackPressed,
+              icon: const Icon(Icons.arrow_back_rounded,
+                  color: AppColors.textDark),
+            ),
+            const SizedBox(width: 2),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Customers",
+                    style: TextStyle(
+                      fontSize: 36,
+                      height: 1.15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    center.isEmpty
+                        ? "$count customers"
+                        : "$count customers  •  $center",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomerTile(customerModel customer) {
+    final phone = displayValue(customer.Phone_No, fallback: '');
+    return AppCard(
+      onTap: () => _openProfile(customer),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          InitialsAvatar(name: customer.Name, size: 56),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayValue(customer.Name),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  phone.isEmpty
+                      ? customer.No.toString()
+                      : "${customer.No}  •  $phone",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 14.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded,
+              color: AppColors.textMuted, size: 28),
+        ],
+      ),
+    );
+  }
+
+  Widget _scrollableMessage(Widget child) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [const SizedBox(height: 40), child],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
         onWillPop: _onBackPressed,
         child: Scaffold(
-          appBar: AppBar(
-            title: Text(
-              "Customers",
-              style:
-                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-            ),
-            centerTitle: true,
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: Container(
-                  height: 40,
-                  width: 170, // Adjust the width as needed
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(width: 1.0, color: Colors.grey),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _searchPressed,
-                    decoration: InputDecoration(
-                      hintText: 'Search...',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.all(10),
-                    ),
+          body: Column(
+            children: [
+              FutureBuilder(
+                future: _func,
+                builder: (context, _) => _buildHeader(),
+              ),
+              _buildSearchBar(),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _refreshData,
+                  child: FutureBuilder(
+                    future: _func,
+                    builder: (context, data) {
+                      if (data.hasError) {
+                        return _scrollableMessage(
+                          EmptyState(
+                            icon: Icons.person_search_rounded,
+                            title: "Customer Not Found",
+                            message:
+                                "The customer with ID ${widget.Id} cannot be found / is not assined to your Account.",
+                            action: OutlinedButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text("OK"),
+                            ),
+                          ),
+                        );
+                      } else if (data.hasData) {
+                        if (_filteredCustomerList.isEmpty) {
+                          return _scrollableMessage(
+                            EmptyState(
+                              icon: Icons.storefront_rounded,
+                              title: _searchController.text.isEmpty
+                                  ? "No customers yet"
+                                  : "No matching customers",
+                              message: _searchController.text.isEmpty
+                                  ? "Customers assigned to you will appear here."
+                                  : "Try a different name, number or phone.",
+                            ),
+                          );
+                        }
+                        return ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(20, 2, 20, 100),
+                          itemCount: _filteredCustomerList.length,
+                          itemBuilder: (context, index) =>
+                              _buildCustomerTile(_filteredCustomerList[index]),
+                        );
+                      } else {
+                        return _scrollableMessage(
+                          const Column(
+                            children: [
+                              AppLoader(),
+                              SizedBox(height: 14),
+                              Text(
+                                "Loading customers…",
+                                style: TextStyle(color: AppColors.textMuted),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ),
               ),
             ],
           ),
-          body: RefreshIndicator(
-            onRefresh: _refreshData,
-            child: Container(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: 10,
-                    ),
-                    FutureBuilder(
-                      future: _func,
-                      builder: (context, data) {
-                        if (data.hasError) {
-                          return Center(
-                              child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text("Oops!! 😔"),
-                              Text("Failed"),
-                              AlertDialog(
-                                title: Text("Customer Not Found"),
-                                content: Text(
-                                    "The customer with ID ${widget.Id} cannot be found / is not assined to your Account."),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: Text("OK"),
-                                  ),
-                                ],
-                              )
-                            ],
-                          ));
-                        } else if (data.hasData) {
-                          return ListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemCount: _filteredCustomerList.length,
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => customerProfile(
-                                            customerId:
-                                                _filteredCustomerList[index]
-                                                    .No
-                                                    .toString(),
-                                            balance: '',
-                                            balanceDue: '',
-                                            blocked:
-                                                _filteredCustomerList[index]
-                                                    .Blocked
-                                                    .toString(),
-                                            email: _filteredCustomerList[index]
-                                                .E_Mail
-                                                .toString(),
-                                            homePage:
-                                                _filteredCustomerList[index]
-                                                    .Home_Page
-                                                    .toString(),
-                                            name: _filteredCustomerList[index]
-                                                .Name
-                                                .toString(),
-                                            no: _filteredCustomerList[index]
-                                                .No
-                                                .toString(),
-                                            phoneNumber:
-                                                _filteredCustomerList[index]
-                                                    .Phone_No
-                                                    .toString(),
-                                            picture:
-                                                _filteredCustomerList[index]
-                                                    .Picture
-                                                    .toString(),
-                                            primaryContacNo:
-                                                _filteredCustomerList[index]
-                                                    .Primary_Contact_No
-                                                    .toString(),
-                                            responsibilityCenter:
-                                                _filteredCustomerList[index]
-                                                    .Responsibility_Center
-                                                    .toString(),
-                                            salespersonCode:
-                                                _filteredCustomerList[index]
-                                                    .Salesperson_Code
-                                                    .toString(),
-                                            latitude:
-                                                _filteredCustomerList[index]
-                                                    .Latitude,
-                                            longitude:
-                                                _filteredCustomerList[index]
-                                                    .Longitude,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Container(
-                                      height: 70,
-                                      child: Card(
-                                        color: Colors.white,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 8.0, right: 8),
-                                          child: Row(children: [
-                                            Icon(
-                                              Icons.store,
-                                              color: Colors.grey,
-                                            ),
-                                            SizedBox(
-                                              width: 25,
-                                            ),
-                                            Text(
-                                              _filteredCustomerList[index]
-                                                  .Name
-                                                  .toString(),
-                                              style: TextStyle(fontSize: 19),
-                                            ),
-                                            Spacer(),
-                                            Text(
-                                              _filteredCustomerList[index]
-                                                  .No
-                                                  .toString(),
-                                              style: TextStyle(fontSize: 15),
-                                            )
-                                          ]),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              });
-                        } else {
-                          return Center(
-                            child: Column(
-                              children: [
-                                SizedBox(
-                                  height: 60,
-                                ),
-                                Container(
-                                    height: 140,
-                                    child: Center(
-                                      child: Column(
-                                        children: [
-                                          CircularProgressIndicator(),
-                                          Text("Loading Please wait....")
-                                        ],
-                                      ),
-                                    )),
-                              ],
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    SizedBox(
-                      height: 60,
-                    )
-                  ],
-                ),
-              ),
-            ),
-          ),
-          floatingActionButton: FloatingActionButton(
+          floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
               Navigator.push(
                   context,
@@ -312,10 +358,10 @@ class _customerShopsPageState extends State<customerShopsPage> {
                             responsC: widget.responsC.toString(),
                           )));
             },
-            backgroundColor: Colors.black,
-            child: Icon(
-              Icons.add,
-              color: Colors.white,
+            icon: const Icon(Icons.add_rounded, size: 28),
+            label: const Text(
+              "New customer",
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
             ),
           ),
         ));

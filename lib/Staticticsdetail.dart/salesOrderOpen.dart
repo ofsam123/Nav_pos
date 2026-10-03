@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -14,6 +15,8 @@ import '../Models/itemsSoldModel.dart';
 import '../Models/postedSalesInvoiceModel.dart';
 import '../Models/salesOrderOpenModel.dart';
 import '../apiHelper.dart';
+import '../theme/app_theme.dart';
+import '../widgets/app_widgets.dart';
 import 'PostedSalesDetails.dart';
 
 class salesOrder extends StatefulWidget {
@@ -64,215 +67,105 @@ class _salesOrderState extends State<salesOrder> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          "Sales Order",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        // automaticallyImplyLeading: false,
-        centerTitle: true,
-      ),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              FutureBuilder(
-                future: _func,
-                builder: (context, data) {
-                  if (data.hasError) {
-                    return Center(
+      appBar: AppBar(title: const Text('Sales Order')),
+      body: FutureBuilder(
+        future: _func,
+        builder: (context, data) {
+          if (data.hasError) {
+            return const EmptyState(
+              icon: Icons.cloud_off_rounded,
+              title: 'Failed to load data',
+              message: 'Please check your connection and try again later.',
+            );
+          } else if (data.hasData) {
+            var items = data.data as List<salesOrderModelModel>;
+            if (items.isEmpty) {
+              return const EmptyState(
+                icon: Icons.receipt_long_outlined,
+                title: 'No  Sales Order Available',
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return AppCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SalesOrderDetails(
+                                  docsNo: items[index].No.toString(),
+                                )));
+                  },
+                  child: Row(
+                    children: [
+                      const IconBadge(
+                        icon: Icons.receipt_long_rounded,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
                         child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text("Oops!! 😔"),
-                        Text("Failed later"),
-                      ],
-                    ));
-                  } else if (data.hasData) {
-                    var items = data.data as List<salesOrderModelModel>;
-                    if (items.isEmpty) {
-                      // Display an alert dialog when the list is empty
-                      return Center(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("No  Sales Order Available"),
-                          ],
-                        ),
-                      );
-                    }
-                    return ListView.builder(
-                        itemCount: items == null ? 0 : items.length,
-                        physics: ClampingScrollPhysics(),
-                        shrinkWrap: true,
-                        scrollDirection: Axis.vertical,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.all(2),
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => SalesOrderDetails(
-                                              docsNo:
-                                                  items[index].No.toString(),
-                                            )));
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  // boxShadow: [
-                                  //   BoxShadow(
-                                  //     color: Colors.grey,
-                                  //     offset: const Offset(
-                                  //       5.0,
-                                  //       5.0,
-                                  //     ),
-                                  //     blurRadius: 100.0,
-                                  //     spreadRadius: 2.0,
-                                  //   ),
-                                  // ],
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                width: MediaQuery.of(context).size.width / 1.1,
-                                child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        right: 10.0, top: 0),
-                                    child: Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 20, right: 20, top: 05),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                items[index]
-                                                    .Sell_to_Customer_No
-                                                    .toString(),
-                                                style: TextStyle(
-                                                    color: Colors.grey),
-                                              ),
-                                              Container(
-                                                height: 80,
-                                                decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            15),
-                                                    color: Colors.white),
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                      .only(
-                                                                  left: 0),
-                                                          child: Text(
-                                                            items[index]
-                                                                .Sell_to_Customer_Name
-                                                                .toString(),
-                                                            style: TextStyle(
-                                                                fontSize: 17,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    Row(
-                                                      children: [
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                      .only(
-                                                                  left: 0),
-                                                          child: Text(
-                                                            items[index]
-                                                                .No
-                                                                .toString(),
-                                                            style: TextStyle(
-                                                                fontSize: 15,
-                                                                color: Colors
-                                                                    .black,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          ),
-                                                        ),
-                                                        Spacer(),
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                      .only(
-                                                                  right: 8.0),
-                                                          child: Text(
-                                                            items[index]
-                                                                .Posting_Date
-                                                                .toString(),
-                                                            style: TextStyle(
-                                                                color:
-                                                                    Colors.grey,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    // Text(
-                                                    //   "(QTY) " +
-                                                    //       items[index]
-                                                    //           .Responsibility_Center
-                                                    //           .toString(),
-                                                    // )
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Divider()
-                                      ],
-                                    )),
+                            Text(
+                              item.Sell_to_Customer_Name.toString(),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textDark,
                               ),
                             ),
-                          );
-                        });
-                  } else {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                              height: 140,
-                              child: Image.asset("assets/images/loading.gif"))
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              item.Sell_to_Customer_No.toString(),
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              item.No.toString(),
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textDark,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
+                      const SizedBox(width: 12),
+                      Text(
+                        item.Posting_Date.toString(),
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.textMuted,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          } else {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 60),
+              child: Center(child: AppLoader()),
+            );
+          }
+        },
       ),
     );
   }
@@ -282,8 +175,8 @@ class _salesOrderState extends State<salesOrder> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String resCenter = (prefs.getString('Sales_Resp_Ctr_Filter') ?? '');
 
-    // SimpleFontelicoProgressDialog progressDialog =
-    //     SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    // AppLoadingDialog progressDialog =
+    //     AppLoadingDialog(context: context, barrierDimisable: true);
     // progressDialog.show(
     //   message: "loading ...",
     // );

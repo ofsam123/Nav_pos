@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
 import 'API.dart';
 import 'apiHelper.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class EditCustomerPage extends StatefulWidget {
   const EditCustomerPage({
@@ -195,159 +198,177 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          "Edit Customer",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
+        title: const Text("Edit Customer"),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           children: [
-            Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
+            AppCard(
               child: Row(
                 children: [
-                  CircleAvatar(
-                    backgroundColor: Color.fromRGBO(15, 86, 148, 0.12),
-                    child: Icon(Icons.store,
-                        color: Color.fromRGBO(15, 86, 148, 1)),
+                  InitialsAvatar(
+                    name: nameController.text.isEmpty
+                        ? widget.customerId
+                        : nameController.text,
+                    size: 48,
                   ),
-                  SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Customer No.",
-                          style:
-                              TextStyle(color: Colors.grey[600], fontSize: 12)),
-                      Text(
-                        widget.customerId,
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ],
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Customer No.",
+                          style: TextStyle(
+                              color: AppColors.textMuted, fontSize: 13),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.customerId,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 20),
-            _field(
-              controller: nameController,
-              label: "Name",
-              icon: Icons.person_outline,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? "Please provide a name" : null,
-            ),
-            _field(
-              controller: phoneController,
-              label: "Phone No.",
-              icon: Icons.phone_outlined,
-              keyboardType: TextInputType.phone,
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? "Please provide a phone number"
-                  : null,
-            ),
-            _field(
-              controller: emailController,
-              label: "E-mail",
-              icon: Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress,
-              validator: (v) {
-                final value = (v ?? "").trim();
-                if (value.isEmpty) return null;
-                return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)
-                    ? null
-                    : "Enter a valid email, e.g. test@gmail.com";
-              },
-            ),
-            _field(
-              controller: homePageController,
-              label: "Home Page",
-              icon: Icons.language,
-              keyboardType: TextInputType.url,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 6, bottom: 10, left: 4),
-              child: Text(
-                "LOCATION",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.1,
-                  color: Colors.grey[600],
-                ),
+            const SizedBox(height: 20),
+            const SmallCapsLabel("Business"),
+            AppCard(
+              child: _field(
+                controller: nameController,
+                label: "Name",
+                hint: "Customer name",
+                icon: Icons.storefront_outlined,
+                last: true,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? "Please provide a name"
+                    : null,
               ),
             ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _field(
-                    controller: latitudeController,
-                    label: "Latitude",
-                    icon: Icons.my_location,
-                    keyboardType: TextInputType.numberWithOptions(
-                        decimal: true, signed: true),
-                    validator: (v) => _validateCoordinate(v, 90, "Latitude"),
+            const SizedBox(height: 20),
+            const SmallCapsLabel("Contact"),
+            AppCard(
+              child: Column(
+                children: [
+                  _field(
+                    controller: phoneController,
+                    label: "Phone No.",
+                    hint: "e.g. 0241234567",
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? "Please provide a phone number"
+                        : null,
                   ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: _field(
-                    controller: longitudeController,
-                    label: "Longitude",
-                    icon: Icons.explore_outlined,
-                    keyboardType: TextInputType.numberWithOptions(
-                        decimal: true, signed: true),
-                    validator: (v) => _validateCoordinate(v, 180, "Longitude"),
+                  _field(
+                    controller: emailController,
+                    label: "E-mail",
+                    hint: "name@example.com",
+                    icon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      final value = (v ?? "").trim();
+                      if (value.isEmpty) return null;
+                      return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                              .hasMatch(value)
+                          ? null
+                          : "Enter a valid email, e.g. test@gmail.com";
+                    },
                   ),
-                ),
-              ],
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: _locating ? null : _useCurrentLocation,
-                icon: _locating
-                    ? SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(Icons.gps_fixed),
-                label: Text("Use my current location"),
+                  _field(
+                    controller: homePageController,
+                    label: "Home Page",
+                    hint: "www.example.com",
+                    icon: Icons.language,
+                    keyboardType: TextInputType.url,
+                    last: true,
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 12),
-            SizedBox(
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromRGBO(15, 86, 148, 1),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: _saving ? null : _save,
-                child: _saving
-                    ? SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : Text("Save Changes", style: TextStyle(fontSize: 16)),
+            const SizedBox(height: 20),
+            const SmallCapsLabel("Location"),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _field(
+                          controller: latitudeController,
+                          label: "Latitude",
+                          hint: "0.000000",
+                          icon: Icons.my_location,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true, signed: true),
+                          validator: (v) =>
+                              _validateCoordinate(v, 90, "Latitude"),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _field(
+                          controller: longitudeController,
+                          label: "Longitude",
+                          hint: "0.000000",
+                          icon: Icons.explore_outlined,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true, signed: true),
+                          validator: (v) =>
+                              _validateCoordinate(v, 180, "Longitude"),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _locating ? null : _useCurrentLocation,
+                      icon: _locating
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: AppLoader(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.gps_fixed),
+                      label: const Text("Use my current location"),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: _saving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: AppLoader(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.check_rounded),
+              label: const Text("Save Changes"),
+            ),
+          ),
         ),
       ),
     );
@@ -357,21 +378,47 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    String? hint,
+    bool last = false,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        validator: validator,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      padding: EdgeInsets.only(bottom: last ? 0 : 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _FieldLabel(label),
+          TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            validator: validator,
+            decoration: InputDecoration(
+              hintText: hint ?? label,
+              prefixIcon: Icon(icon),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 6),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textDark,
         ),
       ),
     );

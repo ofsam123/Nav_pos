@@ -8,8 +8,10 @@ import 'package:nav_pos/apiHelper.dart';
 import 'package:nav_pos/bottomNavigation.dart';
 import 'package:nav_pos/statictis.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 import 'API.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class ReturnOrderLogic extends StatefulWidget {
   ReturnOrderLogic({super.key, required this.rc});
@@ -199,8 +201,9 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
         title: Text("Daily Return Items"),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 25.0),
+            padding: const EdgeInsets.only(right: 12.0),
             child: IconButton(
+                tooltip: 'History',
                 onPressed: () {
                   Navigator.push(
                       context,
@@ -209,12 +212,14 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
                                 rc: widget.rc.toString(),
                               )));
                 },
-                icon: Icon(Icons.history)),
+                icon: const Icon(Icons.history_rounded)),
           )
         ],
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Container(
             //   child: ListView.builder(
@@ -280,21 +285,34 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
             //         }
             //       }),
             // ),
-            Container(
-              child: ListView.builder(
+            if (matchingItemNos.isEmpty && unmatchedItemNos.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 60),
+                child: EmptyState(
+                  icon: Icons.assignment_return_outlined,
+                  title: 'No items to return',
+                  message: 'Items due for return today will appear here.',
+                ),
+              )
+            else ...[
+              const SmallCapsLabel('Items to return'),
+              ListView.builder(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
                 itemCount: matchingItemNos.length + unmatchedItemNos.length,
                 itemBuilder: (BuildContext context, int index) {
                   if (matchingItemNos.isEmpty && unmatchedItemNos.isEmpty) {
                     // Display a message when the list is empty
-                    return ListTile(
-                      title: Text('No items to return'),
+                    return const EmptyState(
+                      icon: Icons.assignment_return_outlined,
+                      title: 'No items to return',
                     );
                   }
 
                   Widget deleteButton = IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
+                    tooltip: 'Remove',
+                    icon: const Icon(Icons.delete_outline_rounded,
+                        color: AppColors.danger),
                     onPressed: () {
                       deleteItem(index);
                     },
@@ -315,48 +333,37 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
 
                   return shouldHideItem
                       ? Container()
-                      : ListTile(
-                          title: Text(
-                            'Item No: $currentItemNo',
-                            style: TextStyle(
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                      : _ReturnItemCard(
+                          title: 'Item No: $currentItemNo',
                           subtitle: index < matchingItemNos.length
-                              ? Text(
-                                  'Return Quantity: ${subtractedQuantities[index]}',
-                                  style: TextStyle(fontSize: 14.0),
-                                )
-                              : Text(
-                                  'Return Quantity: ${getQtyReceived(unmatchedItemNos[index - matchingItemNos.length])}',
-                                  style: TextStyle(fontSize: 14.0),
-                                ),
+                              ? 'Return Quantity: ${subtractedQuantities[index]}'
+                              : 'Return Quantity: ${getQtyReceived(unmatchedItemNos[index - matchingItemNos.length])}',
                           trailing: deleteButton,
                         );
                 },
               ),
-            ),
+            ],
           ],
         ),
       ),
-      floatingActionButton:
+      bottomNavigationBar:
           (matchingItemNos.isNotEmpty || unmatchedItemNos.isNotEmpty)
-              ? FloatingActionButton.extended(
-                  onPressed: () {
-                    _getTransferHeader(
-                        transferFromCodes[transferFromCodes] ?? "KT");
-                    // sendReturnItems();
-                    // Call the function when the button is pressed
-                  },
-                  backgroundColor: Colors.black,
-                  label: Text(
-                    'Return Items',
-                    style: TextStyle(color: Colors.white),
+              ? SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _getTransferHeader(
+                            transferFromCodes[transferFromCodes] ?? "KT");
+                        // sendReturnItems();
+                        // Call the function when the button is pressed
+                      },
+                      icon: const Icon(Icons.assignment_return_outlined),
+                      label: const Text('Return Items'),
+                    ),
                   ),
                 )
               : null, // Set to null when the list is empty
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -381,8 +388,8 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
   Future<void> QRecieve() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String Location_Code = (prefs.getString('Location_Code') ?? '');
-    // SimpleFontelicoProgressDialog progressDialog =
-    //     SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    // AppLoadingDialog progressDialog =
+    //     AppLoadingDialog(context: context, barrierDimisable: true);
     // progressDialog.show(
     //   message: "Loading ...",
     // );
@@ -459,8 +466,8 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
   // ... (rest of your code remains the same)
 
   Future<void> _getTransferHeader(String transferFromCode) async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -536,8 +543,8 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
   // ... (Rest of your code remains the same)
 
   Future<void> _getTransferLine(String itemNo, int quantity) async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -584,8 +591,8 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
   Future<void> QSold() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String Location_Code = (prefs.getString('Location_Code') ?? '');
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -695,8 +702,8 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
   }
 
   void sendReturnItems() async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(
       context: context,
       barrierDimisable: true,
     );
@@ -740,8 +747,8 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
   Future<void> QRecieve11() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String Location_Code = (prefs.getString('Location_Code') ?? '');
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -797,5 +804,66 @@ class _ReturnOrderLogicState extends State<ReturnOrderLogic> {
       progressDialog.hide();
       helper.flushBar2("Error", 'Error submitting. Try again Later', context);
     }
+  }
+}
+
+class _ReturnItemCard extends StatelessWidget {
+  const _ReturnItemCard({
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.inputFill,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.inventory_2_outlined,
+                color: AppColors.textMuted, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          trailing,
+        ],
+      ),
+    );
   }
 }

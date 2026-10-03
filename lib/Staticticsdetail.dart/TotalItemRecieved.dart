@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -9,6 +10,73 @@ import '../API.dart';
 import '../Models/TotalItemReceivedModel.dart';
 import '../Models/itemsSoldModel.dart';
 import '../apiHelper.dart';
+import '../theme/app_theme.dart';
+import '../widgets/app_widgets.dart';
+
+class _ReceivedItemRow extends StatelessWidget {
+  const _ReceivedItemRow({
+    required this.itemNo,
+    required this.quantity,
+    required this.date,
+  });
+
+  final String itemNo;
+  final int quantity;
+  final String date;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const IconBadge(icon: Icons.inventory_2_rounded, color: AppColors.success),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                itemNo,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                date,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '$quantity',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
+            ),
+            const Text(
+              'Qty',
+              style: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
 
 class totalItemsRevived extends StatefulWidget {
   totalItemsRevived({required this.responsibilityCenter});
@@ -46,181 +114,66 @@ class _totalItemsRevivedState extends State<totalItemsRevived> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          "Total Item Received Today",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
+        title: const Text('Total Item Received Today'),
         actions: [
           IconButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => TotalItemRecievedHistory(
-                              responsibilityCenter:
-                                  widget.responsibilityCenter.toString(),
-                            )));
-              },
-              icon: Icon(Icons.history))
+            tooltip: 'History',
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => TotalItemRecievedHistory(
+                            responsibilityCenter:
+                                widget.responsibilityCenter.toString(),
+                          )));
+            },
+            icon: const Icon(Icons.history_rounded),
+          ),
         ],
       ),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              FutureBuilder(
-                  future: _func,
-                  builder: (context, data) {
-                    if (data.hasError) {
-                      return Center(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text("Oops!! 😔"),
-                            Text("Failed later"),
-                          ],
-                        ),
-                      );
-                    } else if (data.hasData) {
-                      var items = data.data as List<itemsRecivedModel>;
-                      if (items.isEmpty) {
-                        return Center(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text("No Item Received Today"),
-                            ],
-                          ),
-                        );
-                      }
-                      return ListView.builder(
-                        itemCount: _totalQuantities.length,
-                        physics: ClampingScrollPhysics(),
-                        shrinkWrap: true,
-                        itemBuilder: (context, index) {
-                          String itemNo =
-                              _totalQuantities.keys.elementAt(index);
-                          int totalQuantity = _totalQuantities[itemNo]!;
-                          return Padding(
-                            padding: const EdgeInsets.all(2),
-                            child: GestureDetector(
-                              onTap: () {
-                                // Handle item tap
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                width: MediaQuery.of(context).size.width / 1.1,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                      right: 10.0, top: 5),
-                                  child: Column(
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 20, right: 20, top: 05),
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Container(
-                                              height: 80,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(15),
-                                                color: Colors.white,
-                                              ),
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(left: 0),
-                                                        child: Text(
-                                                          itemNo,
-                                                          style: TextStyle(
-                                                            fontSize: 19,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                  Row(
-                                                    children: [
-                                                      Text(
-                                                        "(QTY) $totalQuantity",
-                                                        style: TextStyle(
-                                                            fontSize: 18),
-                                                      ),
-                                                      Spacer(),
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(
-                                                                right: 8.0),
-                                                        child: Text(
-                                                          items[0]
-                                                              .Posting_Date
-                                                              .toString(),
-                                                          style: TextStyle(
-                                                            color: Colors.grey,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Divider()
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    } else {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              height: 140,
-                              child: Image.asset("assets/images/loading.gif"),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                  }),
-            ],
-          ),
-        ),
+      body: FutureBuilder(
+        future: _func,
+        builder: (context, data) {
+          if (data.hasError) {
+            return const EmptyState(
+              icon: Icons.cloud_off_rounded,
+              title: 'Failed to load data',
+              message: 'Please check your connection and try again later.',
+            );
+          } else if (data.hasData) {
+            var items = data.data as List<itemsRecivedModel>;
+            if (items.isEmpty) {
+              return const EmptyState(
+                icon: Icons.move_to_inbox_outlined,
+                title: 'No Item Received Today',
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              itemCount: _totalQuantities.length,
+              itemBuilder: (context, index) {
+                String itemNo = _totalQuantities.keys.elementAt(index);
+                int totalQuantity = _totalQuantities[itemNo]!;
+                return AppCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  onTap: () {
+                    // Handle item tap
+                  },
+                  child: _ReceivedItemRow(
+                    itemNo: itemNo,
+                    quantity: totalQuantity,
+                    date: items[0].Posting_Date.toString(),
+                  ),
+                );
+              },
+            );
+          } else {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 60),
+              child: Center(child: AppLoader()),
+            );
+          }
+        },
       ),
     );
   }

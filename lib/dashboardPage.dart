@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 import 'package:nav_pos/apiHelper.dart';
 import 'package:nav_pos/size_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +11,8 @@ import 'API.dart';
 import 'Models/itemsModel2.dart';
 import 'customWidget.dart';
 import 'itemsDesscription.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class dashboardPage extends StatefulWidget {
   const dashboardPage({Key? key}) : super(key: key);
@@ -86,244 +89,204 @@ class _dashboardPageState extends State<dashboardPage> {
     });
   }
 
+  void _openItem(itemsModel2 item) {
+    int randomImageIndex = Random().nextInt(randomProductImageURLs.length);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => itemDetails(
+          Description: item.Description.toString(),
+          No: item.No.toString(),
+          SerialNums: item.Serial_Nos.toString(),
+          basedUnit: item.Base_Unit_of_Measure.toString(),
+          description2: item.Description_2.toString(),
+          itemCatCode: item.Item_Category_Code.toString(),
+          itemTrackingCode: item.Item_Tracking_Code.toString(),
+          lotsNos: item.Lot_Nos.toString(),
+          pricesVat: '',
+          salesUnit: item.Sales_Unit_of_Measure.toString(),
+          type: item.Type.toString(),
+          block: item.Blocked.toString(),
+          image: randomProductImageURLs[randomImageIndex],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemCard(itemsModel2 item) {
+    return AppCard(
+      onTap: () => _openItem(item),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.inputFill,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.liquor_rounded,
+                  size: 44, color: Color(0xFF9CA3AF)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            displayValue(item.Description),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 14.5,
+              height: 1.3,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            displayValue(item.No),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
-        leading: Icon(Icons.workspaces_outlined),
-        title: Column(
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              "Discover",
-              style:
-                  TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
+              child: FutureBuilder(
+                future: _func,
+                builder: (context, data) {
+                  final count = _searchController.text.isNotEmpty
+                      ? _filteredItems.length
+                      : _items.length;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Items",
+                        style: TextStyle(
+                          fontSize: 36,
+                          height: 1.15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        data.hasData ? "$count products" : "All products",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: Container(
-              height: 40,
-              width: 150, // Adjust the width as needed
+            Container(
+              margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(width: 1.0, color: Colors.grey),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: AppColors.softShadow,
               ),
               child: TextField(
                 controller: _searchController,
                 onChanged: _filterItems,
+                style: const TextStyle(fontSize: 16),
                 decoration: InputDecoration(
-                  hintText: 'Search...',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(10),
+                  hintText: 'Search products',
+                  fillColor: AppColors.surface,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 17),
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.only(left: 14, right: 8),
+                    child: Icon(Icons.search_rounded, size: 26),
+                  ),
+                  suffixIcon: _searchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () {
+                            _searchController.clear();
+                            _filterItems('');
+                          },
+                        ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: Container(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 20, right: 10),
-                  child: Row(
-                    children: [
-                      Text(
-                        "All Products",
-                        style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 18),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                Column(
-                  children: [
-                    FutureBuilder(
-                      future: _func,
-                      builder: (context, data) {
-                        if (data.hasError) {
-                          return Center(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("Oops!! 😔"),
-                                Text("Failed later"),
-                              ],
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                child: FutureBuilder(
+                  future: _func,
+                  builder: (context, data) {
+                    if (data.hasError) {
+                      return ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 40),
+                          EmptyState(
+                            icon: Icons.cloud_off_rounded,
+                            title: "Failed to load products",
+                            message: "Pull down to try again.",
+                          ),
+                        ],
+                      );
+                    } else if (data.hasData) {
+                      var items = _searchController.text.isNotEmpty
+                          ? _filteredItems
+                          : data.data as List<itemsModel2>;
+                      if (items.isEmpty) {
+                        return ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: const [
+                            SizedBox(height: 40),
+                            EmptyState(
+                              icon: Icons.inventory_2_outlined,
+                              title: "No products found",
                             ),
-                          );
-                        } else if (data.hasData) {
-                          var items = _searchController.text.isNotEmpty
-                              ? _filteredItems
-                              : data.data as List<itemsModel2>;
-
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                              mainAxisExtent: getVerticalSize(220.00),
-                              crossAxisCount: 3,
-                              mainAxisSpacing: getHorizontalSize(00),
-                              crossAxisSpacing: getHorizontalSize(11.00),
-                            ),
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: items == null ? 0 : items.length,
-                            itemBuilder: (context, index) {
-                              int randomImageIndex = Random()
-                                  .nextInt(randomProductImageURLs.length);
-
-                              String description =
-                                  items[index].Description.toString();
-                              List<String> words = description.split(' ');
-                              String firstThreeWords =
-                                  words.take(2).take(3).join(' ');
-
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 10, right: 10),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => itemDetails(
-                                          Description: items[index]
-                                              .Description
-                                              .toString(),
-                                          No: items[index].No.toString(),
-                                          SerialNums: items[index]
-                                              .Serial_Nos
-                                              .toString(),
-                                          basedUnit: items[index]
-                                              .Base_Unit_of_Measure
-                                              .toString(),
-                                          description2: items[index]
-                                              .Description_2
-                                              .toString(),
-                                          itemCatCode: items[index]
-                                              .Item_Category_Code
-                                              .toString(),
-                                          itemTrackingCode: items[index]
-                                              .Item_Tracking_Code
-                                              .toString(),
-                                          lotsNos:
-                                              items[index].Lot_Nos.toString(),
-                                          pricesVat: '',
-                                          salesUnit: items[index]
-                                              .Sales_Unit_of_Measure
-                                              .toString(),
-                                          type: items[index].Type.toString(),
-                                          block:
-                                              items[index].Blocked.toString(),
-                                          image: randomProductImageURLs[
-                                              randomImageIndex],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    height: 140,
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          height: 130,
-                                          decoration: BoxDecoration(
-                                            color: Color.fromARGB(
-                                                255, 236, 235, 235),
-                                            borderRadius:
-                                                BorderRadius.circular(15),
-                                            image: DecorationImage(
-                                              image: NetworkImage(
-                                                randomProductImageURLs[
-                                                    randomImageIndex],
-                                              ),
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                          child: Center(
-                                            child: Container(
-                                              height: 80,
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          height: 15,
-                                        ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 5.0),
-                                          child: Text(
-                                            firstThreeWords,
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          height: 5,
-                                        ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 5.0),
-                                          child: Row(
-                                            children: [
-                                              Container(
-                                                child: Text(
-                                                  items[index].No.toString(),
-                                                  style: TextStyle(
-                                                    color: Colors.black,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        } else {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Container(
-                                  height: 140,
-                                  child:
-                                      Image.asset("assets/images/loading.gif"),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
+                          ],
+                        );
+                      }
+                      return GridView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 2, 20, 24),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 220,
+                          mainAxisExtent: 230,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                        ),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) =>
+                            _buildItemCard(items[index]),
+                      );
+                    } else {
+                      return const Center(child: AppLoader());
+                    }
+                  },
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

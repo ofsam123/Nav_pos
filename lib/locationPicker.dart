@@ -6,13 +6,14 @@ import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_place_picker_mb/google_maps_place_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'apiHelper.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class LocationPage extends StatefulWidget {
   const LocationPage({super.key});
@@ -91,110 +92,71 @@ class _LocationPageState extends State<LocationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("location"),
+        title: const Text("Location"),
         leading: IconButton(
-          icon: Icon(Icons.keyboard_arrow_left, color: Colors.black),
+          icon: const Icon(Icons.keyboard_arrow_left),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
       ),
-      body: Container(
-        color: Color.fromARGB(255, 236, 235, 235),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              SizedBox(height: 3),
-              SizedBox(
-                height: 10,
-              ),
-              Container(
-                  width: double.infinity,
-                  height: 220,
-                  color: Colors.white,
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        children: [
+          const SmallCapsLabel("Other Location"),
+          AppCard(
+            child: Row(
+              children: [
+                const IconBadge(
+                  icon: Icons.map_outlined,
+                  color: AppColors.primary,
+                  size: 44,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        height: 10,
+                      const Text(
+                        "Selected address",
+                        style: TextStyle(
+                            fontSize: 13, color: AppColors.textMuted),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20.0),
-                        child: Text(
-                          "Other Location",
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold),
+                      const SizedBox(height: 2),
+                      Text(
+                        otherLocationController.text.isEmpty
+                            ? "No location selected"
+                            : otherLocationController.text,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                        style: const TextStyle(
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20.0, top: 20),
-                        child: Row(
-                          children: [
-                            Container(
-                              height: 30,
-                              child: Icon(Icons.map),
-                            ),
-                            SizedBox(
-                              width: 10,
-                            ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                /*  Text(
-                                  _currentCountry,
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                                ),
-                                SizedBox(
-                                  height: 5,
-                                ),*/
-                                Text(
-                                  otherLocationController.text,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  softWrap: false,
-                                  style: TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 17),
-                                ),
-                                /*Text(
-                                  otherLocationController.text,
-                                  style: TextStyle(color: Colors.black, fontSize: smallText),
-                                ),*/
-                              ],
-                            ),
-                            Spacer(),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 20.0),
-                              child: GestureDetector(
-                                onTap: () {
-                                  showPlacePicker();
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 20.0),
-                                  child: Icon(Icons.edit),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        height: 10,
-                      )
                     ],
-                  )),
-              SizedBox(
-                height: 5,
-              ),
-            ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    showPlacePicker();
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.edit_outlined,
+                        size: 20, color: AppColors.primary),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

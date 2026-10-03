@@ -3,6 +3,7 @@ import 'package:nav_pos/testPage.dart';
 import 'locationPicker.dart';
 import 'loginPage.dart';
 import 'loops.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,12 +16,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Nav POS',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light(),
       home: loginPage(),
     );
   }

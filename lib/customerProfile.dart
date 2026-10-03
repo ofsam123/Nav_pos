@@ -9,7 +9,7 @@ import 'package:nav_pos/apiHelper.dart';
 import 'package:nav_pos/testPage.dart';
 import 'package:nav_pos/testp2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'API.dart';
 import 'Cart.dart';
@@ -17,6 +17,8 @@ import 'Models/ItemsModel.dart';
 import 'bottomNavigation.dart';
 import 'customWidget.dart';
 import 'editCustomer.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class customerProfile extends StatefulWidget {
   customerProfile({
@@ -195,612 +197,403 @@ class _customerProfileState extends State<customerProfile> {
     });
   }
 
+  int get _selectedCount => itemSelections.where((s) => s).length;
+
+  Future<void> _callCustomer() async {
+    final phone = displayValue(_phoneNumber, fallback: '');
+    if (phone.isEmpty) {
+      helper.flushBar2(
+          "Warning", "No phone number saved for this customer", context);
+      return;
+    }
+    await launchUrl(Uri(scheme: 'tel', path: phone));
+  }
+
+  Future<void> _openCustomerLocation() async {
+    final lat = _latitude;
+    final lng = _longitude;
+    if (lat == null || lng == null || (lat == 0 && lng == 0)) {
+      helper.flushBar2("Warning",
+          "No location saved. Edit the customer to add one.", context);
+      return;
+    }
+    await launchUrl(
+      Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng'),
+      mode: LaunchMode.externalApplication,
+    );
+  }
+
+  void _openCart() {
+    List<itemsModel> selectedItems = [];
+
+    for (int i = 0; i < itemSelections.length; i++) {
+      if (itemSelections[i]) {
+        selectedItems.add(items[i]);
+      }
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectionPage(
+          customerId: widget.customerId.toString(),
+          name: _name.toString(),
+          responsibilityCenter: widget.responsibilityCenter.toString(),
+          salespersonCode: widget.salespersonCode.toString(),
+          selectedItems: selectedItems,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusPill() {
+    final blocked = displayValue(widget.blocked, fallback: '');
+    final isActive = blocked.isEmpty || blocked == '_blank_';
+    return StatusPill(
+      text: isActive ? "Active" : "Blocked: $blocked",
+      color: isActive ? AppColors.success : AppColors.danger,
+    );
+  }
+
+  Widget _buildHeroCard() {
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(16, 22, 16, 16),
+      child: Column(
+        children: [
+          Container(
+            width: 96,
+            height: 96,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: AppColors.primarySoft,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              initialsOf(_name),
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 34,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            displayValue(_name, fallback: 'Unnamed customer'),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                widget.no.toString(),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 17,
+                ),
+              ),
+              const SizedBox(width: 12),
+              _buildStatusPill(),
+            ],
+          ),
+          const SizedBox(height: 6),
+          TextButton(
+            onPressed: _showDetails,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              minimumSize: const Size(0, 32),
+              textStyle:
+                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            child: const Text("View details"),
+          ),
+          const SizedBox(height: 6),
+          const Divider(),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _QuickAction(
+                icon: Icons.call_rounded,
+                label: "Call",
+                onTap: _callCustomer,
+              ),
+              _QuickAction(
+                icon: Icons.location_on_rounded,
+                label: "Map",
+                onTap: _openCustomerLocation,
+              ),
+              _QuickAction(
+                icon: Icons.groups_rounded,
+                label: "Visit",
+                onTap: () => _Alert(context),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Text(
+              label,
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 6,
+            child: Text(
+              displayValue(value),
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDetails() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(sheetContext).size.height * 0.8,
+          ),
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(22, 0, 22, 24),
+            children: [
+              const Text(
+                "Customer details",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 16),
+              const SmallCapsLabel("General info"),
+              _infoRow("Balance (LCY)", "0.00"),
+              _infoRow("Balance Due (LCY)", "0.00"),
+              _infoRow("Credit Limit", "0.00"),
+              _infoRow("Blocked", widget.blocked),
+              _infoRow("Salesperson Code", widget.salespersonCode),
+              _infoRow("Responsibility Center", widget.responsibilityCenter),
+              const SizedBox(height: 14),
+              const Divider(),
+              const SizedBox(height: 14),
+              const SmallCapsLabel("Contact"),
+              _infoRow("Primary Contact Code", widget.primaryContacNo),
+              _infoRow("Contact Name", _name),
+              _infoRow("Phone Number", _phoneNumber),
+              _infoRow("Email", _email),
+              _infoRow("Fax No", null),
+              _infoRow("Home Page", _homePage),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildItemTile(int index) {
+    final selected = itemSelections[index];
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 16, 12),
+      onTap: () {
+        setState(() {
+          itemSelections[index] = !itemSelections[index];
+        });
+      },
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.inputFill,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.liquor_rounded,
+                color: Color(0xFF4B5563), size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  items[index].Item_Description.toString(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  displayValue(items[index].Item_No),
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 14.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: selected ? AppColors.primary : Colors.transparent,
+              border: Border.all(
+                color: selected ? AppColors.primary : const Color(0xFFC5CBD6),
+                width: 1.5,
+              ),
+            ),
+            child: selected
+                ? const Icon(Icons.check_rounded,
+                    color: Colors.white, size: 20)
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemsList() {
+    return FutureBuilder<List<itemsModel>>(
+      future: _func,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: Center(child: AppLoader()),
+          );
+        } else if (snapshot.hasError) {
+          return EmptyState(
+            icon: Icons.cloud_off_rounded,
+            title: "Failed to load data",
+            message: "Check your connection and try again.",
+            action: OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _func = _getItems1();
+                });
+              },
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text("Retry"),
+            ),
+          );
+        } else if (snapshot.hasData) {
+          items = _filterItems(snapshot.data!);
+          if (items.isEmpty) {
+            return EmptyState(
+              icon: Icons.inventory_2_outlined,
+              title: selectedCategory == 1
+                  ? "No Item Received Today"
+                  : "No items available",
+            );
+          }
+          return ListView.builder(
+            itemCount: items.length,
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            itemBuilder: (context, index) => _buildItemTile(index),
+          );
+        } else {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: Center(child: AppLoader()),
+          );
+        }
+      },
+    );
+  }
+
   Widget build(BuildContext context) {
+    final selectedCount = _selectedCount;
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          "Customer Profile",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
+        title: const Text("Customer"),
         actions: [
           IconButton(
               tooltip: "Edit customer",
               onPressed: _openEditCustomer,
-              icon: Icon(Icons.edit_outlined)),
-          IconButton(
-              onPressed: () {
-                _Alert(context);
-              },
-              icon: Icon(Icons.accessibility))
+              icon: const Icon(Icons.edit_outlined, size: 26)),
+          const SizedBox(width: 6),
         ],
       ),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Container(
-                // color: Colors.black,
-                height: 120,
-                decoration: BoxDecoration(
-                    image: DecorationImage(
-                        fit: BoxFit.cover,
-                        image: AssetImage("assets/images/cp.jpg"))),
-              ),
-              // SizedBox(
-              //   height: 10,
-              // ),
-              Padding(
-                padding: const EdgeInsets.only(left: 15.0, right: 10, top: 10),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 200,
-                      child: Text(
-                        _name.toString().replaceAll("null", "Empty"),
-                        style: TextStyle(
-                            fontSize: 19, fontWeight: FontWeight.w400),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    // Spacer(),
-                    // Container(
-                    //   height: 40,
-                    //   width: 40,
-                    //   decoration: BoxDecoration(
-                    //       borderRadius: BorderRadius.circular(10),
-                    //       border: Border.all(width: 1.0, color: Colors.grey)),
-                    //   child: IconButton(
-                    //       onPressed: () {
-                    //         openMaps();
-                    //       },
-                    //       icon: Icon(
-                    //         Icons.location_pin,
-                    //         color: Colors.black,
-                    //         size: 25,
-                    //       )),
-                    // ),
-                    SizedBox(
-                      width: 7,
-                    ),
-                    // Container(
-                    //   height: 40,
-                    //   width: 40,
-                    //   decoration: BoxDecoration(
-                    //       borderRadius: BorderRadius.circular(10),
-                    //       border: Border.all(width: 1.0, color: Colors.grey)),
-                    //   child: IconButton(
-                    //       onPressed: () {},
-                    //       icon: Icon(
-                    //         Icons.history,
-                    //         color: Colors.black,
-                    //         size: 25,
-                    //       )),
-                    // )
-                  ],
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+        children: [
+          _buildHeroCard(),
+          const SizedBox(height: 18),
+          SegmentedTabs(
+            labels: [for (final c in categories) c.toString()],
+            selectedIndex: selectedCategory,
+            onChanged: (index) {
+              setState(() {
+                selectedCategory = index;
+                itemSelections = List.filled(100, false);
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          _buildItemsList(),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+          child: SizedBox(
+            height: 60,
+            child: ElevatedButton.icon(
+              onPressed: _openCart,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
                 ),
+                textStyle:
+                    const TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 20.0),
-                child: Row(
-                  children: [
-                    Text(
-                      widget.no.toString(),
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 1,
-              ),
-              ExpansionTile(
-                title: Text(
-                  "General Info",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                ),
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Balance(LCY):",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          "0.00",
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 17,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "balance Due(LCY):",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          "0.00",
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 17,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Credit Limit:",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          "0.00",
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 17,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Blocked",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          widget.blocked.toString(),
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 17,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Salesperson Code:",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          widget.salespersonCode.toString(),
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 17,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Responsibility Center",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          widget.responsibilityCenter.toString(),
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(
-                height: 1,
-              ),
-              ExpansionTile(
-                title: Text(
-                  "Contact",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                ),
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Primary Contact Code:",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          widget.primaryContacNo
-                              .toString()
-                              .replaceAll("", "Empty"),
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 17,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Contact Name:",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          _name.toString().replaceAll("null", "Empty"),
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 17,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Phone Number:",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          _phoneNumber
-                              .toString()
-                              .replaceAll("null", "Empty"),
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 17,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Email:",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          _email.toString().replaceAll("null", "Empty"),
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 17,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Fax No:",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          "(blank)",
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 17,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Home Page:",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.black),
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Text(
-                          _homePage
-                              .toString()
-                              .replaceAll("null", "Empty"),
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                            // color: Colors.white,
-                            ),
-                        // width: 280,
-                        height: 50,
-                        child: ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: categories.length,
-                            scrollDirection: Axis.horizontal,
-                            itemBuilder: ((context, index) => CategoryCard(
-                                  bColor: index == selectedCategory
-                                      ? Colors.black
-                                      : Colors.white,
-                                  onTap: () {
-                                    setState(() {
-                                      selectedCategory = index;
-                                      itemSelections =
-                                          List.filled(100, false);
-                                    });
-                                  },
-                                  text: categories[index],
-                                  textColor: selectedCategory == index
-                                      ? Colors.white
-                                      : Color(0xFF6F6F6F),
-                                ))),
-                      ),
-                    ),
-                    Spacer(),
-                    // SizedBox(
-                    //   width: 0,
-                    // ),
-                  ],
-                ),
-              ),
-
-              if (selectedCategory == 0)
-                ...{}
-              else if (selectedCategory == 1) ...{
-                // Padding(
-                //   padding: EdgeInsets.only(bottom: 4),
-                //   child: Container(
-                //     height: 500,
-                //     // child: DashboardTransactionHistory(),
-                //   ),
-                // ),
-              },
-
-              // SingleChildScrollView(
-              //   child: Column(
-              //     children: [
-              //       Container(
-              //         height: 20000,
-              //         child: SelectionList(),
-              //       ),
-              //     ],
-              //   ),
-              // ),
-
-              FutureBuilder<List<itemsModel>>(
-                future: _func,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text("Oops!! 😔"),
-                          Text("Failed to load data"),
-                          ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _func = _getItems1();
-                              });
-                            },
-                            child: Text("Retry"),
-                          ),
-                        ],
-                      ),
-                    );
-                  } else if (snapshot.hasData) {
-                    items = _filterItems(snapshot.data!);
-                    if (items.isEmpty) {
-                      return Center(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(selectedCategory == 1
-                                ? "No Item Received Today"
-                                : "No items available"),
-                          ],
-                        ),
-                      );
-                    }
-                    // Initialize items here
-                    return ListView.builder(
-                      itemCount: items == null ? 0 : items.length,
-                      physics: ClampingScrollPhysics(),
-                      shrinkWrap: true,
-                      scrollDirection: Axis.vertical,
-                      itemBuilder: (context, index) {
-                        int randomImageIndex =
-                            Random().nextInt(randomProductImageURLs.length);
-                        return ListTile(
-                          leading: Container(
-                            height: 120,
-                            width: 100,
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 240, 238, 238),
-                              // image: DecorationImage(
-                              //     colorFilter: ColorFilter.mode(
-                              //       Color.fromARGB(255, 146, 144, 144)
-                              //           .withOpacity(0.9),
-                              //       BlendMode.modulate,
-                              //     ),
-                              //     image: NetworkImage(
-                              //       randomProductImageURLs[randomImageIndex],
-                              //     ),
-                              //     fit: BoxFit.cover),
-                              borderRadius: BorderRadius.circular(10),
-                              // color: Color.fromARGB(101, 11, 117, 187)
-                            ),
-                            child: Center(
-                              child: Container(
-                                  height: 80,
-                                  // child: Image.asset("assets/images/perfume.png"),
-                                  child: Icon(
-                                    Icons.shopify_outlined,
-                                    color: Colors.grey,
-                                  )),
-                            ),
-                          ),
-                          title: Text(
-                            items[index].Item_Description.toString(),
-                          ),
-                          trailing: Checkbox(
-                            checkColor: Colors.blue,
-                            activeColor: Colors.white,
-                            value: itemSelections[index],
-                            onChanged: (bool? value) {
-                              setState(() {
-                                itemSelections[index] = value ?? false;
-                              });
-                            },
-                          ),
-                        );
-                      },
-                    );
-                  } else {
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                },
-              ),
-
-              SizedBox(
-                height: 50,
-              ),
-            ],
+              icon: const Icon(Icons.shopping_cart_outlined, size: 28),
+              label: Text(selectedCount > 0
+                  ? "View Cart ($selectedCount)"
+                  : "View Cart"),
+            ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
-        child: Icon(Icons.shopping_cart),
-        onPressed: () async {
-          List<itemsModel> selectedItems = [];
-
-          for (int i = 0; i < itemSelections.length; i++) {
-            if (itemSelections[i]) {
-              selectedItems.add(items[i]);
-            }
-          }
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SelectionPage(
-                // selectedItems.cast<itemsModel>(),
-                // Docs_No.toString(),
-                customerId: widget.customerId.toString(),
-                name: _name.toString(),
-                responsibilityCenter: widget.responsibilityCenter.toString(),
-                salespersonCode: widget.salespersonCode.toString(),
-                selectedItems: selectedItems,
-              ),
-            ),
-          );
-        },
       ),
     );
   }
 
   Future<void> _getSalesHeader() async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -930,11 +723,11 @@ class _customerProfileState extends State<customerProfile> {
       double latitude = position.latitude;
       double longitude = position.longitude;
 
-      SimpleFontelicoProgressDialog progressDialog =
-          SimpleFontelicoProgressDialog(
+      AppLoadingDialog progressDialog =
+          AppLoadingDialog(
               context: context, barrierDimisable: true);
       progressDialog.show(
-        message: "Visitation Loading ...",
+        message: "Saving visit ...",
       );
       SharedPreferences prefs = await SharedPreferences.getInstance();
       // String User_Name = (prefs.getString('User_Name') ?? '');
@@ -1035,70 +828,256 @@ class _customerProfileState extends State<customerProfile> {
   _Alert(BuildContext context) {
     outcomeController.clear();
     commentController.clear();
-    showDialog(
+    final locationFuture = Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    locationFuture.ignore();
+    showModalBottomSheet(
         context: context,
+        isScrollControlled: true,
         builder: (BuildContext context) {
-          return AlertDialog(
-            //title: Text("Do you want to logout ?"),
-            content: SingleChildScrollView(
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text("Do you want to mark Onsite Visitation?"),
-                  SizedBox(height: 16),
-                  TextField(
-                    controller: outcomeController,
-                    decoration: InputDecoration(
-                      labelText: "Outcome of the visit",
-                      border: OutlineInputBorder(),
+                  const Text(
+                    "Record onsite visit",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
                     ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 6),
+                  Text(
+                    "${displayValue(_name, fallback: '')}  •  ${widget.no}",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 17,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  _LocationBanner(future: locationFuture),
+                  const SizedBox(height: 22),
+                  const Text(
+                    "Outcome of the visit",
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: outcomeController,
+                    maxLines: 3,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: _sheetFieldDecoration(
+                      hint: "What was the outcome of this visit?",
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   TextField(
                     controller: commentController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: "Comment",
-                      border: OutlineInputBorder(),
+                    maxLines: 4,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: _sheetFieldDecoration(
+                      hint: "Add a note about this visit…",
+                      label: "Comment",
                     ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.textMuted,
+                            minimumSize: const Size(0, 56),
+                            textStyle: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text("Cancel"),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: SizedBox(
+                          height: 56,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              textStyle: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            onPressed: () {
+                              _postVisitation(
+                                outcome: outcomeController.text.trim(),
+                                comment: commentController.text.trim(),
+                              );
+                              Navigator.pop(context);
+                            },
+                            child: const Text("Submit visit"),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            actions: [
-              TextButton(
-                child: Text("Cancel"),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+          );
+        });
+  }
+
+  InputDecoration _sheetFieldDecoration({required String hint, String? label}) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+    );
+    return InputDecoration(
+      hintText: hint,
+      labelText: label,
+      floatingLabelBehavior: FloatingLabelBehavior.always,
+      labelStyle: const TextStyle(
+        color: AppColors.textDark,
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+      ),
+      filled: true,
+      fillColor: AppColors.surface,
+      contentPadding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border.copyWith(
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+    );
+  }
+}
+
+class _LocationBanner extends StatelessWidget {
+  const _LocationBanner({required this.future});
+
+  final Future<Position> future;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Position>(
+      future: future,
+      builder: (context, snapshot) {
+        final String text;
+        final String? coords;
+        if (snapshot.hasData) {
+          text = "Location captured";
+          coords =
+              "${snapshot.data!.latitude.toStringAsFixed(4)}, ${snapshot.data!.longitude.toStringAsFixed(4)}";
+        } else if (snapshot.hasError) {
+          text = "Location unavailable — allow location access";
+          coords = null;
+        } else {
+          text = "Capturing location…";
+          coords = null;
+        }
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: AppColors.primarySoft,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                snapshot.hasError
+                    ? Icons.location_off_rounded
+                    : Icons.location_on_rounded,
+                color: snapshot.hasError ? AppColors.danger : AppColors.primary,
               ),
-              Container(
-                height: 40,
-                width: 120,
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
-                ),
-                child: TextButton(
-                  style: TextButton.styleFrom(
-                    textStyle: const TextStyle(fontSize: 17),
-                  ),
-                  onPressed: () {
-                    _postVisitation(
-                      outcome: outcomeController.text.trim(),
-                      comment: commentController.text.trim(),
-                    );
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    "Submit",
-                    style: TextStyle(color: Colors.white, fontSize: 17),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    text: text,
+                    style: const TextStyle(
+                      color: AppColors.textDark,
+                      fontSize: 15.5,
+                    ),
+                    children: [
+                      if (coords != null)
+                        TextSpan(
+                          text: "  •  $coords",
+                          style: const TextStyle(color: AppColors.primary),
+                        ),
+                    ],
                   ),
                 ),
               ),
             ],
-          );
-        });
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: const BoxDecoration(
+                  color: AppColors.primarySoft,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 28),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

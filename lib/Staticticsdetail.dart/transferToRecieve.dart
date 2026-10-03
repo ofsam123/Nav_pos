@@ -6,10 +6,12 @@ import 'package:nav_pos/Staticticsdetail.dart/TransferToRevcioeveDeatilsPage.dar
 import 'package:nav_pos/bottomNavigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 import '../API.dart';
 import '../Models/transferToReveiveModel.dart';
 import '../apiHelper.dart';
+import '../theme/app_theme.dart';
+import '../widgets/app_widgets.dart';
 
 class TransferToRecieve extends StatefulWidget {
   TransferToRecieve({super.key, required this.responsCenter});
@@ -60,257 +62,144 @@ class _TransferToRecieveState extends State<TransferToRecieve> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          "Transfer To Recieve",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        // automaticallyImplyLeading: false,
-        centerTitle: true,
+        title: const Text("Transfer To Receive"),
       ),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              FutureBuilder(
-                future: _func,
-                builder: (context, data) {
-                  if (data.hasError) {
-                    return Center(
+      body: FutureBuilder(
+        future: _func,
+        builder: (context, data) {
+          if (data.hasError) {
+            return const EmptyState(
+              icon: Icons.cloud_off_rounded,
+              title: 'Failed to load data',
+            );
+          } else if (data.hasData) {
+            var items = data.data as List<TransferToRevieveModel>;
+            if (items.isEmpty) {
+              return const EmptyState(
+                icon: Icons.local_shipping_outlined,
+                title: "No Items Recieve",
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final received =
+                    items[index].POS_Status.toString().contains("Received");
+                return AppCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => transferToReciveDetailsPage(
+                                  docsNo: items[index].No.toString(),
+                                )));
+                  },
+                  child: Row(
+                    children: [
+                      const IconBadge(
+                        icon: Icons.local_shipping_outlined,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
                         child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text("Oops!! 😔"),
-                        Text("Failed later"),
-                      ],
-                    ));
-                  } else if (data.hasData) {
-                    var items = data.data as List<TransferToRevieveModel>;
-                    if (items.isEmpty) {
-                      // Display an alert dialog when the list is empty
-                      return Center(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("No Items Recieve"),
-                          ],
-                        ),
-                      );
-                    }
-                    return ListView.builder(
-                        itemCount: items == null ? 0 : items.length,
-                        physics: ClampingScrollPhysics(),
-                        shrinkWrap: true,
-                        scrollDirection: Axis.vertical,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.all(2),
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            transferToReciveDetailsPage(
-                                              docsNo:
-                                                  items[index].No.toString(),
-                                            )));
-                              },
-                              child: Container(
-                                height: 100,
-                                child: Card(
-                                  color: Colors.white,
-                                  // decoration: BoxDecoration(
-                                  //   color: Colors.white,
-
-                                  //   borderRadius: BorderRadius.circular(10),
-                                  // ),
-                                  // width: MediaQuery.of(context).size.width / 1.1,
-                                  child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          right: 10.0, top: 0, left: 5),
-                                      child: Column(
-                                        children: [
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(top: 05),
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Container(
-                                                  height: 85,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            15),
-                                                  ),
-                                                  child: Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Row(
-                                                        children: [
-                                                          Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    left: 10),
-                                                            child: Text(
-                                                              items[index]
-                                                                  .No
-                                                                  .toString(),
-                                                              style: TextStyle(
-                                                                  fontSize: 19,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            ),
-                                                          ),
-                                                          Spacer(),
-                                                          Visibility(
-                                                            visible: !items[
-                                                                    index]
-                                                                .POS_Status
-                                                                .toString()
-                                                                .contains(
-                                                                    "Received"),
-                                                            child: IconButton(
-                                                              onPressed: () {
-                                                                showDialog(
-                                                                  context:
-                                                                      context,
-                                                                  builder:
-                                                                      (BuildContext
-                                                                          context) {
-                                                                    return AlertDialog(
-                                                                      content: Text("Confirm Receipt of Transfer No " +
-                                                                          items[index]
-                                                                              .No
-                                                                              .toString()),
-                                                                      actions: [
-                                                                        TextButton(
-                                                                          child:
-                                                                              Text("Cancel"),
-                                                                          onPressed:
-                                                                              () {
-                                                                            Navigator.of(context).pop();
-                                                                          },
-                                                                        ),
-                                                                        Container(
-                                                                          height:
-                                                                              40,
-                                                                          width:
-                                                                              120,
-                                                                          decoration:
-                                                                              BoxDecoration(
-                                                                            color:
-                                                                                Colors.black,
-                                                                            borderRadius:
-                                                                                BorderRadius.all(Radius.circular(20)),
-                                                                          ),
-                                                                          child:
-                                                                              TextButton(
-                                                                            style:
-                                                                                TextButton.styleFrom(
-                                                                              textStyle: const TextStyle(fontSize: 17),
-                                                                            ),
-                                                                            onPressed:
-                                                                                () {
-                                                                              Navigator.of(context).pop();
-                                                                              // _postVisitation();
-                                                                              _updateHeader(items[index].No.toString());
-                                                                            },
-                                                                            child:
-                                                                                Text(
-                                                                              "Submit",
-                                                                              style: TextStyle(color: Colors.white, fontSize: 17),
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    );
-                                                                  },
-                                                                );
-                                                              },
-                                                              icon: Icon(Icons
-                                                                  .send_rounded),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      Row(
-                                                        children: [
-                                                          Text(
-                                                            "Status:" +
-                                                                items[index]
-                                                                    .POS_Status
-                                                                    .toString(),
-                                                            style: TextStyle(
-                                                                fontSize: 18),
-                                                          ),
-                                                          Spacer(),
-                                                          Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    right: 8.0),
-                                                            child: Text(
-                                                              items[index]
-                                                                  .Posting_Date
-                                                                  .toString(),
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .grey,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      )),
-                                ),
+                            Text(
+                              displayValue(items[index].No.toString()),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textDark,
                               ),
                             ),
-                          );
-                        });
-                  } else {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                              height: 140,
-                              child: Image.asset("assets/images/loading.gif"))
-                        ],
+                            const SizedBox(height: 6),
+                            StatusPill(
+                              text: displayValue(
+                                  items[index].POS_Status.toString()),
+                              color: received
+                                  ? AppColors.success
+                                  : AppColors.warning,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              displayValue(
+                                  items[index].Posting_Date.toString()),
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
+                      Visibility(
+                        visible: !items[index]
+                            .POS_Status
+                            .toString()
+                            .contains("Received"),
+                        child: IconButton(
+                          tooltip: "Receive",
+                          color: AppColors.primary,
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text("Confirm Receipt"),
+                                  content: Text(
+                                    "Confirm Receipt of Transfer No " +
+                                        items[index].No.toString(),
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      child: const Text("Cancel"),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        minimumSize: const Size(120, 44),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        // _postVisitation();
+                                        _updateHeader(
+                                            items[index].No.toString());
+                                      },
+                                      child: const Text("Submit"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          icon: const Icon(Icons.send_rounded),
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: AppColors.textMuted),
+                    ],
+                  ),
+                );
+              },
+            );
+          } else {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 60),
+              child: Center(child: AppLoader()),
+            );
+          }
+        },
       ),
     );
   }
@@ -320,8 +209,8 @@ class _TransferToRecieveState extends State<TransferToRecieve> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String resCenter = (prefs.getString('Sales_Resp_Ctr_Filter') ?? '');
 
-    // SimpleFontelicoProgressDialog progressDialog =
-    //     SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    // AppLoadingDialog progressDialog =
+    //     AppLoadingDialog(context: context, barrierDimisable: true);
     // progressDialog.show(
     //   message: "loading ...",
     // );
@@ -371,8 +260,8 @@ class _TransferToRecieveState extends State<TransferToRecieve> {
     //   helper.snackBarNotification("Please provide password", context);
     //   return;
     // }
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Updating ...",
     );

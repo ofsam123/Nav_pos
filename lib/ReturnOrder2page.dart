@@ -8,8 +8,11 @@ import 'package:nav_pos/Models/transferLineModel.dart';
 import 'package:nav_pos/apiHelper.dart';
 import 'package:nav_pos/bottomNavigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 import 'package:http/http.dart' as http;
+
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class nonReturnedItemHistory extends StatefulWidget {
   nonReturnedItemHistory({super.key, required this.rc});
@@ -220,23 +223,38 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
         title: Text("Items To be Returned"),
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              child: ListView.builder(
+            if (matchingItemNos.isEmpty && unmatchedItemNos.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 60),
+                child: EmptyState(
+                  icon: Icons.assignment_return_outlined,
+                  title: 'No items to return',
+                  message: 'Items pending return will appear here.',
+                ),
+              )
+            else ...[
+              const SmallCapsLabel('Pending returns'),
+              ListView.builder(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
                 itemCount: matchingItemNos.length + unmatchedItemNos.length,
                 itemBuilder: (BuildContext context, int index) {
                   if (matchingItemNos.isEmpty && unmatchedItemNos.isEmpty) {
                     // Display a message when the list is empty
-                    return ListTile(
-                      title: Text('No items to return'),
+                    return const EmptyState(
+                      icon: Icons.assignment_return_outlined,
+                      title: 'No items to return',
                     );
                   }
 
                   Widget deleteButton = IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
+                    tooltip: 'Remove',
+                    icon: const Icon(Icons.delete_outline_rounded,
+                        color: AppColors.danger),
                     onPressed: () {
                       removeItemAfterBuild(index);
                     },
@@ -264,48 +282,40 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
                     return Container();
                   }
 
-                  return ListTile(
-                    title: Text(
-                      'Item No: $currentItemNo $transferFromCode',
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: index < matchingItemNos.length
-                        ? Text(
-                            'Return Quantity: ${subtractedQuantities[index]}',
-                            style: TextStyle(fontSize: 14.0),
-                          )
-                        : Text(
-                            'Return Quantity: ${getQtyReceived(unmatchedItemNos[index - matchingItemNos.length])}',
-                            style: TextStyle(fontSize: 14.0),
-                          ),
+                  return _ReturnItemCard(
+                    title: 'Item No: $currentItemNo',
+                    subtitle: [
+                      'From: $transferFromCode',
+                      index < matchingItemNos.length
+                          ? 'Return Quantity: ${subtractedQuantities[index]}'
+                          : 'Return Quantity: ${getQtyReceived(unmatchedItemNos[index - matchingItemNos.length])}',
+                    ].join('  •  '),
                     trailing: deleteButton,
                   );
                 },
               ),
-            ),
+            ],
           ],
         ),
       ),
-      floatingActionButton:
+      bottomNavigationBar:
           (matchingItemNos.isNotEmpty || unmatchedItemNos.isNotEmpty)
-              ? FloatingActionButton.extended(
-                  onPressed: () {
-                    _getTransferHeader(
-                        transferFromCodes[transferFromCodes] ?? "KT");
-                    // sendReturnItems();
-                    // Call the function when the button is pressed
-                  },
-                  backgroundColor: Colors.black,
-                  label: Text(
-                    'Return Items',
-                    style: TextStyle(color: Colors.white),
+              ? SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _getTransferHeader(
+                            transferFromCodes[transferFromCodes] ?? "KT");
+                        // sendReturnItems();
+                        // Call the function when the button is pressed
+                      },
+                      icon: const Icon(Icons.assignment_return_outlined),
+                      label: const Text('Return Items'),
+                    ),
                   ),
                 )
               : null, // Set to null when the list is empty
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -330,8 +340,8 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
   Future<void> QRecieve() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String Location_Code = (prefs.getString('Location_Code') ?? '');
-    // SimpleFontelicoProgressDialog progressDialog =
-    //     SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    // AppLoadingDialog progressDialog =
+    //     AppLoadingDialog(context: context, barrierDimisable: true);
     // progressDialog.show(
     //   message: "Loading ...",
     // );
@@ -416,8 +426,8 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
   }
 
   Future<void> _getTransferHeader(String transferFromCode) async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -495,8 +505,8 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
   // ... (Rest of your code remains the same)
 
   Future<void> _getTransferLine(String itemNo, int quantity) async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -541,8 +551,8 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
   }
 
   void sendReturnItems() async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(
       context: context,
       barrierDimisable: true,
     );
@@ -586,8 +596,8 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
   Future<void> QSold() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String Location_Code = (prefs.getString('Location_Code') ?? '');
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -697,8 +707,8 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
   }
 
   Future<List<transferLineModel>> _THETransferLine() async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "loading ...",
     );
@@ -753,8 +763,8 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
   Future<void> QRecieve22() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String Location_Code = (prefs.getString('Location_Code') ?? '');
-    // SimpleFontelicoProgressDialog progressDialog =
-    //     SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    // AppLoadingDialog progressDialog =
+    //     AppLoadingDialog(context: context, barrierDimisable: true);
     // progressDialog.show(
     //   message: "Loading ...",
     // );
@@ -811,8 +821,8 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
   Future<void> QRecieve11() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String Location_Code = (prefs.getString('Location_Code') ?? '');
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -873,6 +883,67 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
       progressDialog.hide();
       helper.flushBar2("Error", 'Error submitting. Try again Later', context);
     }
+  }
+}
+
+class _ReturnItemCard extends StatelessWidget {
+  const _ReturnItemCard({
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.inputFill,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.inventory_2_outlined,
+                color: AppColors.textMuted, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          trailing,
+        ],
+      ),
+    );
   }
 }
 
