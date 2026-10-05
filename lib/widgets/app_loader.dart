@@ -186,15 +186,17 @@ class AppLoadingDialog {
   final BuildContext context;
   final bool barrierDimisable;
 
-  bool _isOpen = false;
-  int _showId = 0;
+  // Kept so hide() still works after the calling page is disposed (e.g. the
+  // user switched tabs mid-request) and only ever removes this dialog.
+  NavigatorState? _navigator;
+  Route<void>? _route;
   final ValueNotifier<String> _message = ValueNotifier<String>('');
 
   void show({required String message}) {
+    hide();
     _message.value = message;
-    _isOpen = true;
-    final id = ++_showId;
-    showDialog<void>(
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final route = DialogRoute<void>(
       context: context,
       barrierDismissible: barrierDimisable,
       barrierColor: AppColors.textDark.withValues(alpha: 0.35),
@@ -203,16 +205,23 @@ class AppLoadingDialog {
         canPop: barrierDimisable,
         child: _LoadingCard(message: _message),
       ),
-    ).then((_) {
-      // Dismissed by tapping outside: a later hide() must not pop the page.
-      if (id == _showId) _isOpen = false;
-    });
+    );
+    _navigator = navigator;
+    _route = route;
+    navigator.push(route);
   }
 
   void hide() {
-    if (_isOpen) {
-      _isOpen = false;
-      Navigator.of(context).pop();
+    final navigator = _navigator;
+    final route = _route;
+    _navigator = null;
+    _route = null;
+    if (navigator == null || route == null) return;
+    if (!navigator.mounted || !route.isActive) return;
+    if (route.isCurrent) {
+      navigator.pop();
+    } else {
+      navigator.removeRoute(route);
     }
   }
 

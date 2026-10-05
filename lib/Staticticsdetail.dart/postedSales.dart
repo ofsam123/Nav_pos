@@ -203,7 +203,7 @@ class _PostedSalesState extends State<PostedSales> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/SalesInvHeaderAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/SalesInvHeaderAPI?" +
               "\$filter=Responsibility_Center eq  " +
               "\'" +
               "${widget.responsibilityCenter.toString()}" +

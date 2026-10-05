@@ -66,6 +66,7 @@ class _SelectionPageState extends State<SelectionPage> {
     );
 
     Timer(Duration(seconds: 1), () {
+      if (!mounted) return;
       setState(() {
         if (selectedItems.isNotEmpty) {
           for (int i = 0; i < selectedItems.length; i++) {
@@ -225,19 +226,29 @@ class _SelectionPageState extends State<SelectionPage> {
     }
   }
 
+  int get _missingUnits {
+    var count = 0;
+    for (var i = 0; i < selectedItems.length; i++) {
+      if (dropdownItems[i].isNotEmpty && selectedCodeMap[i] == null) count++;
+    }
+    return count;
+  }
+
+  static const TextStyle _fieldLabel = TextStyle(
+    color: AppColors.textMuted,
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.8,
+  );
+
   Widget _buildUnitSelector(int index) {
     final options = dropdownItems[index];
     final selected = selectedCodeMap[index];
 
     if (options.isEmpty) {
       return const Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: 14,
-            height: 14,
-            child: AppLoader(strokeWidth: 2),
-          ),
+          SizedBox(width: 14, height: 14, child: AppLoader(strokeWidth: 2)),
           SizedBox(width: 8),
           Text(
             "Loading units…",
@@ -248,61 +259,60 @@ class _SelectionPageState extends State<SelectionPage> {
     }
 
     if (options.length <= _maxInlineUnits) {
-      return Wrap(
-        spacing: 10,
-        runSpacing: 8,
-        alignment: WrapAlignment.end,
-        children: [
-          for (final code in options)
-            _UnitChip(
-              label: code,
-              selected: selected == code,
-              onTap: () {
-                setState(() {
-                  selectedCodeMap[index] = code;
-                });
-              },
-            ),
-        ],
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final code in options) ...[
+              _UnitChip(
+                label: code,
+                selected: selected == code,
+                warn: selected == null,
+                onTap: () => setState(() => selectedCodeMap[index] = code),
+              ),
+              const SizedBox(width: 6),
+            ],
+          ],
+        ),
       );
     }
 
-    return Material(
-      color: selected == null ? AppColors.surface : AppColors.primary,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: selected == null ? const Color(0xFFD1D5DB) : AppColors.primary,
+    final hasValue = selected != null;
+    final accent = hasValue ? AppColors.primary : AppColors.warning;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Material(
+        color: hasValue ? AppColors.primarySoft : AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: hasValue ? AppColors.primary : accent),
         ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: () => _pickUnit(index),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 9, 8, 9),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  selected ?? "Unit (${options.length})",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.4,
-                    color: selected == null
-                        ? AppColors.textMuted
-                        : Colors.white,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => _pickUnit(index),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    hasValue
+                        ? selected.toUpperCase()
+                        : "Unit (${options.length})",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
+                      color: accent,
+                    ),
                   ),
                 ),
-              ),
-              Icon(
-                Icons.expand_more_rounded,
-                color: selected == null ? AppColors.textMuted : Colors.white,
-              ),
-            ],
+                Icon(Icons.expand_more_rounded, size: 18, color: accent),
+              ],
+            ),
           ),
         ),
       ),
@@ -310,25 +320,23 @@ class _SelectionPageState extends State<SelectionPage> {
   }
 
   Widget _buildQuantityStepper(int index) {
+    final quantity = int.tryParse(quantityControllers[index].text) ?? 0;
     return Container(
-      height: 44,
-      padding: const EdgeInsets.only(left: 2, right: 4),
+      height: 36,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.inputFill,
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            onPressed: () => _changeQuantity(index, -1),
-            icon: const Icon(Icons.remove_rounded,
-                color: AppColors.textDark, size: 22),
+          _StepButton(
+            icon: Icons.remove_rounded,
+            onTap: quantity > 1 ? () => _changeQuantity(index, -1) : null,
           ),
           SizedBox(
-            width: 40,
+            width: 38,
             child: TextField(
               keyboardType: TextInputType.number,
               controller: quantityControllers[index],
@@ -337,8 +345,8 @@ class _SelectionPageState extends State<SelectionPage> {
               },
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
                 color: AppColors.textDark,
               ),
               decoration: const InputDecoration(
@@ -352,19 +360,10 @@ class _SelectionPageState extends State<SelectionPage> {
               ),
             ),
           ),
-          InkWell(
-            customBorder: const CircleBorder(),
+          _StepButton(
+            icon: Icons.add_rounded,
+            filled: true,
             onTap: () => _changeQuantity(index, 1),
-            child: Container(
-              width: 34,
-              height: 34,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.add_rounded,
-                  color: Colors.white, size: 24),
-            ),
           ),
         ],
       ),
@@ -372,81 +371,256 @@ class _SelectionPageState extends State<SelectionPage> {
   }
 
   Widget _buildCartItem(int index) {
-    return AppCard(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.fromLTRB(14, 12, 6, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 84,
-                height: 84,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE5E7EB),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.liquor_rounded,
-                    color: Color(0xFF6B7280), size: 40),
+    final item = selectedItems[index];
+
+    return Dismissible(
+      key: ObjectKey(item),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) => removeItem(index),
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.only(right: 24),
+        alignment: Alignment.centerRight,
+        decoration: BoxDecoration(
+          color: AppColors.danger,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.delete_outline_rounded, color: Colors.white),
+            SizedBox(width: 8),
+            Text(
+              "Remove",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 14),
+            ),
+          ],
+        ),
+      ),
+      child: AppCard(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.liquor_rounded,
+                      color: AppColors.primary, size: 19),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "${selectedItems[index].Item_Description}",
-                        maxLines: 2,
+                        displayValue(item.Item_Description),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.textDark,
                         ),
                       ),
-                      const SizedBox(height: 6),
                       Text(
-                        displayValue(selectedItems[index].Item_No),
+                        displayValue(item.Item_No),
                         style: const TextStyle(
                           color: AppColors.textMuted,
-                          fontSize: 16,
+                          fontSize: 12.5,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              IconButton(
-                tooltip: "Remove",
-                icon: const Icon(Icons.delete_outline_rounded,
-                    color: Color(0xFFD9534F), size: 26),
-                onPressed: () {
-                  removeItem(index);
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Row(
+                InkResponse(
+                  onTap: () => removeItem(index),
+                  radius: 18,
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.close_rounded,
+                        color: AppColors.textMuted, size: 18),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
               children: [
+                Expanded(child: _buildUnitSelector(index)),
+                const SizedBox(width: 10),
                 _buildQuantityStepper(index),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: _buildUnitSelector(index),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomerCard() {
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: AppColors.primarySoft,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              initialsOf(widget.name),
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("ORDER FOR", style: _fieldLabel),
+                const SizedBox(height: 3),
+                Text(
+                  displayValue(widget.name),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  widget.customerId,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 13.5,
                   ),
                 ),
               ],
             ),
           ),
+          const Icon(Icons.storefront_outlined, color: AppColors.textMuted),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryBar() {
+    final missing = _missingUnits;
+    final itemCount = selectedItems.length;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: const Border(top: BorderSide(color: AppColors.border)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textDark.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("TOTAL", style: _fieldLabel),
+                      const SizedBox(height: 2),
+                      Text(
+                        "$_totalUnits unit${_totalUnits == 1 ? '' : 's'}",
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Text(
+                    "$itemCount item${itemCount == 1 ? '' : 's'}",
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+              if (missing > 0) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded,
+                        size: 16, color: AppColors.warning),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        "$missing item${missing == 1 ? '' : 's'} still need${missing == 1 ? 's' : ''} a unit",
+                        style: const TextStyle(
+                          color: AppColors.warning,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () {
+                    _getSalesHeader();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    textStyle: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Place order"),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_rounded, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -454,147 +628,68 @@ class _SelectionPageState extends State<SelectionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Checkout"),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.white),
-        shape: const Border(),
-        titleTextStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-        children: [
-          AppCard(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 58,
-                  height: 58,
-                  alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primarySoft,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    initialsOf(widget.name),
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+      appBar: AppBar(title: const Text("Cart")),
+      body: selectedItems.isEmpty
+          ? Center(
+              child: EmptyState(
+                icon: Icons.remove_shopping_cart_outlined,
+                title: "Your cart is empty",
+                message: "Go back and select items for this customer.",
+                action: OutlinedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  label: const Text("Back to items"),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        displayValue(widget.name),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textDark,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        widget.customerId,
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          SmallCapsLabel("Items (${selectedItems.length})"),
-          const SizedBox(height: 4),
-          if (selectedItems.isEmpty)
-            const EmptyState(
-              icon: Icons.remove_shopping_cart_outlined,
-              title: "Your cart is empty",
-              message: "Go back and select items for this customer.",
+              ),
             )
-          else
-            for (int index = 0; index < selectedItems.length; index++)
-              _buildCartItem(index),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0F1D4A).withOpacity(0.06),
-              blurRadius: 16,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 18, 22, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
+                _buildCustomerCard(),
+                const SizedBox(height: 22),
                 Row(
                   children: [
-                    Text(
-                      "${selectedItems.length} item${selectedItems.length == 1 ? '' : 's'}",
-                      style: const TextStyle(
+                    const Text(
+                      "Items",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textDark,
-                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 9, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        "${selectedItems.length}",
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     const Spacer(),
-                    Text(
-                      "$_totalUnits units",
-                      style: const TextStyle(
-                        color: AppColors.textDark,
-                        fontSize: 16,
+                    const Text(
+                      "Swipe left to remove",
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 12.5,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      _getSalesHeader();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      textStyle: const TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    icon: const Icon(Icons.check_circle_outline_rounded,
-                        size: 26),
-                    label: const Text("Place Order"),
-                  ),
-                ),
+                const SizedBox(height: 12),
+                for (int index = 0; index < selectedItems.length; index++)
+                  _buildCartItem(index),
               ],
             ),
-          ),
-        ),
-      ),
+      bottomNavigationBar: selectedItems.isEmpty ? null : _buildSummaryBar(),
     );
   }
 
@@ -604,7 +699,15 @@ class _SelectionPageState extends State<SelectionPage> {
         selectedItems.removeAt(index);
         quantityControllers.removeAt(index);
         dropdownItems.removeAt(index);
-        selectedCodeMap.remove(index);
+        // Units are keyed by position, so items after the removed one shift up.
+        final shifted = <int, String?>{};
+        selectedCodeMap.forEach((i, code) {
+          if (i < index) shifted[i] = code;
+          if (i > index) shifted[i - 1] = code;
+        });
+        selectedCodeMap
+          ..clear()
+          ..addAll(shifted);
       }
     });
   }
@@ -798,18 +901,12 @@ class _SelectionPageState extends State<SelectionPage> {
   }
 
   Future<void> _getUnitMeasure2(int index) async {
-    AppLoadingDialog progressDialog =
-        AppLoadingDialog(context: context, barrierDimisable: true);
-    progressDialog.show(
-      message: "Loading units ...",
-    );
-
     if (index < 0 || index >= selectedItems.length) {
-      progressDialog.hide();
       return;
     }
 
-    String? itemNo = selectedItems[index].Item_No;
+    final requestedItem = selectedItems[index];
+    String? itemNo = requestedItem.Item_No;
 
     String basicAuth = 'Basic ' +
         base64Encode(
@@ -817,7 +914,7 @@ class _SelectionPageState extends State<SelectionPage> {
 
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/ItemUnitofMeasureAPI?\$filter=Item_No eq '$itemNo'"),
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/ItemUnitofMeasureAPI?\$filter=Item_No eq '$itemNo'"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
         'Content-Type': 'application/json',
@@ -826,25 +923,25 @@ class _SelectionPageState extends State<SelectionPage> {
         "Access-Control-Allow-Origin": "*",
       },
     ).catchError((err) {
-      progressDialog.hide();
       helper.alertDialogTitle('${Helper.errorMessageOops}',
           '${Helper.errorMessageSomethingWentWrong}', context);
     });
 
-    progressDialog.hide();
+    if (!mounted) return;
     final responseJson = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      progressDialog.hide();
+      // The item may have moved or been removed while its units loaded.
+      final currentIndex = selectedItems.indexOf(requestedItem);
+      if (currentIndex < 0) return;
       setState(() {
-        dropdownItems[index] = List<String>.from(
+        dropdownItems[currentIndex] = List<String>.from(
           json
               .decode(response.body)["value"]
               .map((item) => item["Code"].toString()),
         );
       });
     } else {
-      progressDialog.hide();
       helper.toastFailedNotification(Helper.errorMessageSomethingWentWrong);
       throw Exception('Failed to load post');
     }
@@ -856,37 +953,88 @@ class _UnitChip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.warn = false,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
+  /// Highlights the chip while no unit has been chosen for the item yet.
+  final bool warn;
+
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppColors.primary : AppColors.surface,
+      color: selected ? AppColors.primarySoft : AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(18),
         side: BorderSide(
-          color: selected ? AppColors.primary : const Color(0xFFD1D5DB),
+          color: selected
+              ? AppColors.primary
+              : (warn ? AppColors.warning.withValues(alpha: 0.6) : AppColors.border),
+          width: selected ? 1.5 : 1,
         ),
       ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (selected) ...[
+                const Icon(Icons.check_rounded,
+                    size: 14, color: AppColors.primary),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                label.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  letterSpacing: 0.4,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? AppColors.primary : AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StepButton extends StatelessWidget {
+  const _StepButton({
+    required this.icon,
+    required this.onTap,
+    this.filled = false,
+  });
+
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return Material(
+      color: filled ? AppColors.primary : AppColors.surface,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
         borderRadius: BorderRadius.circular(8),
         onTap: onTap,
-        child: Container(
-          constraints: const BoxConstraints(minWidth: 72),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          alignment: Alignment.center,
-          child: Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 15,
-              letterSpacing: 0.6,
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : AppColors.textMuted,
-            ),
+        child: SizedBox(
+          width: 30,
+          height: 30,
+          child: Icon(
+            icon,
+            size: 18,
+            color: filled
+                ? Colors.white
+                : (enabled ? AppColors.textDark : AppColors.border),
           ),
         ),
       ),

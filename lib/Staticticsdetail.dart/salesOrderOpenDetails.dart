@@ -202,7 +202,7 @@ class _SalesOrderDetailsState extends State<SalesOrderDetails> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/OSalesLineAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/OSalesLineAPI?" +
               "\$filter=Document_No eq '${widget.docsNo.toString()}'"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',

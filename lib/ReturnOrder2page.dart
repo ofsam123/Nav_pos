@@ -351,7 +351,7 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/QuantityReceivedAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/QuantityReceivedAPI?" +
               "\$filter=Transfer_to_Code eq '${widget.rc}'"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
@@ -607,7 +607,7 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/QuantitySoldAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/QuantitySoldAPI?" +
               "\$filter=Location eq '${widget.rc}'"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
@@ -774,7 +774,7 @@ class _nonReturnedItemHistoryState extends State<nonReturnedItemHistory> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/QuantityReceivedAPI?\$filter=Transfer_from_Code eq '${widget.rc}'"),
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/QuantityReceivedAPI?\$filter=Transfer_from_Code eq '${widget.rc}'"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
         'Content-Type': 'application/json',
@@ -957,7 +957,7 @@ class _ReturnItemCard extends StatelessWidget {
 
   //   final response = await http.get(
   //     Uri.parse(
-  //         "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/QuantityReceivedAPI?" +
+  //         "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/QuantityReceivedAPI?" +
   //             "\$filter=Transfer_to_Code eq '${widget.rc}'"),
   //     headers: {
   //       'Content': 'application/x-www-form-urlencoded',

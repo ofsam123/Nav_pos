@@ -154,7 +154,7 @@ class _TotalItemRecievedHistoryState extends State<TotalItemRecievedHistory> {
 
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/ItemLedgerEntryAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/ItemLedgerEntryAPI?" +
               "\$filter=Location_Code eq '${widget.responsibilityCenter.toString()}' and Posting_Date eq ${now.year}-${now.month}-${now.day} and Quantity gt 0 and Entry_Type eq 'Transfer'"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',

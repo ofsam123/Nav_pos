@@ -155,7 +155,7 @@ class _staticsState extends State<statics> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/QuantityReceivedAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/QuantityReceivedAPI?" +
               "\$filter=Transfer_to_Code eq '$resCenter1' and Receipt_Date eq ${now.year}-${now.month}-${now.day}"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
@@ -197,7 +197,7 @@ class _staticsState extends State<statics> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/QuantitySoldAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/QuantitySoldAPI?" +
               "\$filter=Location eq '$resCenter1' and Posting_Date eq ${now.year}-${now.month}-${now.day}"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
@@ -482,7 +482,7 @@ class _staticsState extends State<statics> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/ResponsibilityCenterAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/ResponsibilityCenterAPI?" +
               "\$filter=User_ID eq '$UserName" +
               "'"),
       headers: {
@@ -546,7 +546,7 @@ class _staticsState extends State<statics> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/SalesInvLineAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/SalesInvLineAPI?" +
               "\$filter=Location_Code eq " +
               "\'" +
               "$resCenter1" +
@@ -615,7 +615,7 @@ class _staticsState extends State<statics> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/SalesInvHeaderAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/SalesInvHeaderAPI?" +
               "\$filter=Responsibility_Center eq " +
               "\'" +
               "$resCenter1" +
@@ -660,7 +660,7 @@ class _staticsState extends State<statics> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/OSalesHeaderAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/OSalesHeaderAPI?" +
               "\$filter=Responsibility_Center eq '$resCenter1' and Document_Type eq 'Order' and Status eq 'Open' and Document_Date eq ${now.year}-${now.month}-${now.day}"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
@@ -700,7 +700,7 @@ class _staticsState extends State<statics> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/TransferHeaderAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/TransferHeaderAPI?" +
               "\$filter=Posting_Date eq ${now.year}-${now.month}-${now.day} and Transfer_to_Code eq '$resCenter1' and Completely_Shipped eq true and Shipment_Date eq ${now.year}-${now.month}-${now.day} and POS_Status eq 'Open'"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
@@ -740,7 +740,7 @@ class _staticsState extends State<statics> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/TransferHeaderAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/TransferHeaderAPI?" +
               "\$filter=Posting_Date eq ${now.year}-${now.month}-${now.day} and Transfer_to_Code eq '$resCenter1' and Completely_Shipped eq false"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
@@ -780,7 +780,7 @@ class _staticsState extends State<statics> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/TransferHeaderAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/TransferHeaderAPI?" +
               "\$filter=Posting_Date eq ${now.year}-${now.month}-${now.day} and Transfer_from_Code eq '$resCenter1' and Completely_Shipped eq false"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
@@ -828,7 +828,7 @@ class _staticsState extends State<statics> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/ItemLedgerEntryAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/ItemLedgerEntryAPI?" +
               "\$filter=Location_Code eq '$resCenter1' and Posting_Date eq ${now.year}-${now.month}-${now.day} and Quantity gt 0 and Entry_Type eq 'Transfer'"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',

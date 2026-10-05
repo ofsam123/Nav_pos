@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter_barcode_scanner_plus/flutter_barcode_scanner_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:nav_pos/widgets/app_loader.dart';
