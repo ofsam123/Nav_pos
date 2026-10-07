@@ -230,7 +230,7 @@ class _transferToReciveDetailsPageState
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/TransferLineAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/TransferLineAPI?" +
               "\$filter=Document_No eq '${widget.docsNo.toString()}' and Completely_Shipped eq true and Shipment_Date eq ${now.year}-${now.month}-${now.day}"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',

@@ -180,7 +180,7 @@ class _returnOrderState extends State<returnOrder> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/TransferHeaderAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/TransferHeaderAPI?" +
               "\$filter=Posting_Date eq 2023-09-07 and Transfer_from_Code eq 'SAL1' and Completely_Shipped eq false"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',

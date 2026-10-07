@@ -24,7 +24,7 @@ class _QuantityPageState extends State<QuantityPage> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/QuantityReceivedAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/QuantityReceivedAPI?" +
               "\$filter=Transfer_to_Code eq 'SAL1' and Receipt_Date eq 2023-09-07"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
@@ -66,7 +66,7 @@ class _QuantityPageState extends State<QuantityPage> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/QuantitySoldAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/QuantitySoldAPI?" +
               "\$filter=Location eq 'SAL1' and Posting_Date eq 2023-09-07"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',

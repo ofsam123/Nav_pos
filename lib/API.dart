@@ -3,7 +3,7 @@ class ApiUrl {
 //Dev
   static const String MainIP =
       // "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/";
-      "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/";
+      "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/";//ZZZ%20TEST%20FOR%20WAGCOL
   static const String APIusername = "INTRANET" + r'\' + "NAV.CLOUD";
   static const String APIpassword =
       "Ek88JQH7tAFFqsbw7xxcl8S4X+Z+JY0py2gWqQMCAe8=";

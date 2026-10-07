@@ -10,9 +10,12 @@ import 'package:http/http.dart' as http;
 import 'API.dart';
 import 'Models/itemsModel2.dart';
 import 'customWidget.dart';
+import 'itemCart.dart';
+import 'itemCartPage.dart';
 import 'itemsDesscription.dart';
 import 'theme/app_theme.dart';
 import 'widgets/app_widgets.dart';
+import 'widgets/cart_widgets.dart';
 
 class dashboardPage extends StatefulWidget {
   const dashboardPage({Key? key}) : super(key: key);
@@ -40,7 +43,7 @@ class _dashboardPageState extends State<dashboardPage> {
     _func = _getItems1();
 
     Timer(Duration(seconds: 1), () {
-      setState(() {});
+      if (mounted) setState(() {});
     });
     super.initState();
   }
@@ -113,6 +116,94 @@ class _dashboardPageState extends State<dashboardPage> {
     );
   }
 
+  void _openCart() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ItemCartPage()),
+    );
+  }
+
+  Widget _buildCartControl(itemsModel2 item) {
+    final cart = ItemCart.instance;
+    final line = cart.lineFor(item.No);
+
+    if (line == null) {
+      return SizedBox(
+        height: 36,
+        width: double.infinity,
+        child: FilledButton.icon(
+          onPressed: () => cart.add(item),
+          style: FilledButton.styleFrom(
+            padding: EdgeInsets.zero,
+            backgroundColor: AppColors.primarySoft,
+            foregroundColor: AppColors.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            textStyle:
+                const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+          icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
+          label: const Text("Add"),
+        ),
+      );
+    }
+
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          StepButton(
+            icon: line.quantity > 1
+                ? Icons.remove_rounded
+                : Icons.delete_outline_rounded,
+            onTap: () => line.quantity > 1
+                ? cart.setQuantity(line, line.quantity - 1)
+                : cart.remove(line),
+          ),
+          Expanded(
+            child: Text(
+              "${line.quantity}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          StepButton(
+            icon: Icons.add_rounded,
+            filled: true,
+            onTap: () => cart.add(item),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartButton() {
+    final cart = ItemCart.instance;
+    final items = cart.itemCount;
+    final units = cart.totalUnits;
+    return FloatingActionButton.extended(
+      onPressed: _openCart,
+      backgroundColor: AppColors.primary,
+      foregroundColor: Colors.white,
+      icon: const Icon(Icons.shopping_cart_outlined),
+      label: Text(
+        "View cart · $items item${items == 1 ? '' : 's'}"
+        "${units != items ? ' ($units units)' : ''}",
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
   Widget _buildItemCard(itemsModel2 item) {
     return AppCard(
       onTap: () => _openItem(item),
@@ -148,6 +239,8 @@ class _dashboardPageState extends State<dashboardPage> {
             displayValue(item.No),
             style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
           ),
+          const SizedBox(height: 10),
+          _buildCartControl(item),
         ],
       ),
     );
@@ -155,7 +248,17 @@ class _dashboardPageState extends State<dashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: ItemCart.instance,
+      builder: (context, _) => _buildPage(context),
+    );
+  }
+
+  Widget _buildPage(BuildContext context) {
+    final cartEmpty = ItemCart.instance.isEmpty;
     return Scaffold(
+      floatingActionButton: cartEmpty ? null : _buildCartButton(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -267,11 +370,12 @@ class _dashboardPageState extends State<dashboardPage> {
                       }
                       return GridView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(20, 2, 20, 24),
+                        padding: EdgeInsets.fromLTRB(
+                            20, 2, 20, cartEmpty ? 24 : 96),
                         gridDelegate:
                             const SliverGridDelegateWithMaxCrossAxisExtent(
                           maxCrossAxisExtent: 220,
-                          mainAxisExtent: 230,
+                          mainAxisExtent: 276,
                           mainAxisSpacing: 14,
                           crossAxisSpacing: 14,
                         ),

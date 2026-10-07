@@ -185,7 +185,7 @@ class _salesOrderState extends State<salesOrder> {
             utf8.encode('${ApiUrl.APIusername}:${ApiUrl.APIpassword}'));
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/OSalesHeaderAPI?" +
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/OSalesHeaderAPI?" +
               "\$filter=Responsibility_Center eq '${widget.resCenter.toString()}' and Document_Type eq 'Order' and Status eq 'Open' and Document_Date eq ${now.year}-${now.month}-${now.day}"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',

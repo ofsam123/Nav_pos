@@ -187,7 +187,7 @@ class _ResetPasswordState extends State<ResetPassword> {
     final response = await http
         .patch(
             Uri.parse(
-                "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/UserAPI(User_Security_ID = ${widget.User_Security_ID})"),
+                "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/UserAPI(User_Security_ID = ${widget.User_Security_ID})"),
             headers: {
               'Content': 'application/x-www-form-urlencoded',
               'Content-Type': 'application/json',

@@ -8,6 +8,7 @@ import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import 'package:http/http.dart' as http;
 
+import 'itemCart.dart';
 import 'theme/app_theme.dart';
 
 class Helper {
@@ -211,6 +212,7 @@ class Helper {
     prefs.remove('User_Name');
     prefs.remove('CanUse_POS');
     prefs.remove('isUserLoggedIn');
+    ItemCart.instance.clear();
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => loginPage()),

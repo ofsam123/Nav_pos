@@ -271,7 +271,7 @@ class _ScanQrState extends State<ScanQr> {
     try {
       response = await http.get(
         Uri.parse(
-            "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/ResponsibilityCenterAPI?" +
+            "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/ResponsibilityCenterAPI?" +
                 "\$filter=User_ID eq '$UserName" +
                 "'"),
         headers: {

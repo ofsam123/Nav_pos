@@ -141,7 +141,7 @@ class _totalItemsRevivedState extends State<myTransferOrder> {
 
     final response = await http.get(
       Uri.parse(
-          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('ZZZ%20TEST%20FOR%20WAGCOL')/TransferHeaderAPI?\$filter=Posting_Date eq ${now.year}-${now.month}-${now.day} and Transfer_to_Code eq '${widget.responsibilityCenter.toString()}' and Completely_Shipped eq false"),
+          "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/TransferHeaderAPI?\$filter=Posting_Date eq ${now.year}-${now.month}-${now.day} and Transfer_to_Code eq '${widget.responsibilityCenter.toString()}' and Completely_Shipped eq false"),
       headers: {
         'Content': 'application/x-www-form-urlencoded',
         'Content-Type': 'application/json',
