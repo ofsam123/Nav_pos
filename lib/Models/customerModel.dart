@@ -17,6 +17,8 @@ class customerModel {
   String? Global_Dimension_1_Filter;
   String? Currency_Filter;
   String? Date_Filter;
+  double? Latitude;
+  double? Longitude;
 
   customerModel({
     this.No,
@@ -33,6 +35,8 @@ class customerModel {
     this.Global_Dimension_2_Filter,
     this.Currency_Filter,
     this.Date_Filter,
+    this.Latitude,
+    this.Longitude,
   });
 
   customerModel.fromJson(Map<String, dynamic> json) {
@@ -44,6 +48,9 @@ class customerModel {
     Phone_No = json['Phone_No'];
     Picture = json['Picture@odata.mediaReadLink'];
     E_Mail = json['E_Mail'];
+    Home_Page = json['Home_Page'];
+    Latitude = (json['Latitude'] as num?)?.toDouble();
+    Longitude = (json['Longitude'] as num?)?.toDouble();
 
     Prices_Including_VAT = json['Prices_Including_VAT'];
     Primary_Contact_No = json['Primary_Contact_No'];

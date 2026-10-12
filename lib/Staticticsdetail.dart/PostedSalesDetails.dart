@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -13,6 +14,8 @@ import '../Models/itemsSoldModel.dart';
 import '../Models/postedInvoiceDetailsModel.dart';
 import '../Models/postedSalesInvoiceModel.dart';
 import '../apiHelper.dart';
+import '../theme/app_theme.dart';
+import '../widgets/app_widgets.dart';
 
 class PostedSalesDetails extends StatefulWidget {
   PostedSalesDetails({required this.docsNo});
@@ -61,144 +64,143 @@ class _PostedSalesDetailsState extends State<PostedSalesDetails> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          "Posted Sales",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        // automaticallyImplyLeading: false,
-        centerTitle: true,
+        title: const Text("Posted Sales"),
       ),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              FutureBuilder(
-                future: _func,
-                builder: (context, data) {
-                  if (data.hasError) {
-                    return Center(
-                        child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
+      body: FutureBuilder(
+        future: _func,
+        builder: (context, data) {
+          if (data.hasError) {
+            return const EmptyState(
+              icon: Icons.cloud_off_rounded,
+              title: 'Failed to load data',
+            );
+          } else if (data.hasData) {
+            var items = data.data as List<postedSaledDetailsModel>;
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              children: [
+                AppCard(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  child: Column(
+                    children: [
+                      _infoRow("Document No", displayValue(widget.docsNo)),
+                      const SizedBox(height: 10),
+                      _infoRow("Lines", items.length.toString()),
+                    ],
+                  ),
+                ),
+                const SmallCapsLabel("Invoice lines"),
+                for (final item in items)
+                  AppCard(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Oops!! 😔"),
-                        Text("Failed later"),
-                      ],
-                    ));
-                  } else if (data.hasData) {
-                    var items = data.data as List<postedSaledDetailsModel>;
-                    return ListView.builder(
-                        itemCount: items == null ? 0 : items.length,
-                        physics: ClampingScrollPhysics(),
-                        shrinkWrap: true,
-                        scrollDirection: Axis.vertical,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.all(2),
-                            child: GestureDetector(
-                              onTap: () {},
-                              child: Card(
-                                color: Color.fromARGB(255, 246, 246, 246),
-                                child: Column(
-                                  children: [
-                                    ListTile(
-                                      leading: Icon(Icons.numbers),
-                                      title: Text(
-                                        "NO: ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index].No.toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                    ListTile(
-                                      leading: Icon(Icons.details),
-                                      title: Text(
-                                        "Description: ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index].Description.toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                    ListTile(
-                                      leading: Icon(Icons.numbers_outlined),
-                                      title: Text(
-                                        "Quantity: ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index].Quantity.toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                    ListTile(
-                                      leading: Icon(Icons.money),
-                                      title: Text(
-                                        "Amount Including VAT : ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index]
-                                            .Amount_Including_VAT
-                                            .toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                    ListTile(
-                                      leading: Icon(Icons.date_range),
-                                      title: Text(
-                                        "Posted Date: ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index].Posting_Date.toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                  ],
+                        const IconBadge(
+                          icon: Icons.inventory_2_outlined,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                displayValue(item.Description.toString()),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textDark,
                                 ),
                               ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "No. ${displayValue(item.No.toString())}",
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                "Posted ${displayValue(item.Posting_Date.toString())}",
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              displayValue(
+                                  item.Amount_Including_VAT.toString()),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.success,
+                              ),
                             ),
-                          );
-                        });
-                  } else {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                              height: 140,
-                              child: Image.asset("assets/images/loading.gif"))
-                        ],
-                      ),
-                    );
-                  }
-                },
-              ),
-            ],
+                            const Text(
+                              "Incl. VAT",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              "Qty ${displayValue(item.Quantity.toString())}",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            );
+          } else {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 60),
+              child: Center(child: AppLoader()),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13.5, color: AppColors.textMuted),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -207,8 +209,8 @@ class _PostedSalesDetailsState extends State<PostedSalesDetails> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String resCenter = (prefs.getString('Sales_Resp_Ctr_Filter') ?? '');
 
-    // SimpleFontelicoProgressDialog progressDialog =
-    //     SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    // AppLoadingDialog progressDialog =
+    //     AppLoadingDialog(context: context, barrierDimisable: true);
     // progressDialog.show(
     //   message: "loading ...",
     // );

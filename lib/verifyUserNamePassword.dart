@@ -101,10 +101,10 @@
 //       return;
 //     }
 
-//     SimpleFontelicoProgressDialog progressDialog =
-//         SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+//     AppLoadingDialog progressDialog =
+//         AppLoadingDialog(context: context, barrierDimisable: true);
 //     progressDialog.show(
-//       message: "Login ...",
+//       message: "Signing in ...",
 //     );
 
 //     SharedPreferences prefs = await SharedPreferences.getInstance();

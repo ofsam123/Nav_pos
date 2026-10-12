@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
+
 class itemDetails extends StatefulWidget {
   itemDetails({
     required this.No,
@@ -39,243 +42,129 @@ class _itemDetailsState extends State<itemDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 231, 229, 229),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Container(
-              //   height: 300,
-              //   color: Color.fromARGB(255, 236, 236, 236),
-              // ),
-              SizedBox(
-                height: 20,
+      appBar: AppBar(
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(Icons.arrow_back_ios_new_rounded)),
+        title: const Text("Details"),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        children: [
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+              color: AppColors.border,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.liquor_rounded,
+                size: 72,
+                color: AppColors.textMuted,
               ),
-              Row(
-                children: [
-                  IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      icon: Icon(Icons.arrow_back_ios)),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Text(
-                    "Details",
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17),
-                  )
-                ],
-              ),
-              SizedBox(
-                height: 300,
-                child: Center(
-                  child: Container(
-                      height: 250,
-                      // child: Image.asset("assets/images/perfume.png")
-                      child: Image.network(widget.image.toString())),
-                ),
-              ),
-              Container(
-                width: double.infinity,
-                height: 600,
-                // height: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(30),
-                      topLeft: Radius.circular(30)),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            "Category Name:",
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: Color.fromARGB(255, 1, 41, 75)),
-                          ),
-                          Text(
-                            widget.itemCatCode.toString(),
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                              // color: Color.fromARGB(255, 1, 41, 75)
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      Text(
-                        "ID NO:  " + widget.No.toString(),
-                        style: TextStyle(
-                          // fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          // color: Color.fromARGB(255, 1, 41, 75)
-                        ),
-                      ),
-                      SizedBox(
-                        height: 25,
-                      ),
-                      Text(
-                        "Product Discription",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Color.fromARGB(255, 1, 41, 75)),
-                      ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      Text(
-                        widget.Description.toString(),
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: Colors.grey),
-                      ),
-                      SizedBox(
-                        height: 25,
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                              // height: 80,
-                              width: MediaQuery.of(context).size.width / 2.4,
-                              // padding: EdgeInsets.only(top: 20),
-                              child: Text("Discription",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Color.fromARGB(255, 1, 41, 75)))),
-                          SizedBox(
-                            width: 20,
-                          ),
-                          Container(
-                              // height: 80,
-                              width: MediaQuery.of(context).size.width / 2.4,
-                              // padding: EdgeInsets.only(top: 20),
-                              child: Text("Blocked",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Color.fromARGB(255, 1, 41, 75)))),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                              // height: 80,
-                              width: MediaQuery.of(context).size.width / 2.4,
-                              // padding: EdgeInsets.only(top: 20),
-                              child: Text(widget.description2.toString(),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Colors.grey))),
-                          SizedBox(
-                            width: 20,
-                          ),
-                          Container(
-                              // height: 80,
-                              width: MediaQuery.of(context).size.width / 2.4,
-                              child: Text(
-                                  widget.block
-                                      .toString()
-                                      .replaceAll("null", "false"),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Colors.grey))
-                              // padding: EdgeInsets.only(top: 20),
-                              // child: Checkbox(value: (bool? vale), onChanged: (bool? value) {  },)),
-                              )
-                        ],
-                      ),
-                      SizedBox(
-                        height: 25,
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                              // height: 80,
-                              width: MediaQuery.of(context).size.width / 2.4,
-                              // padding: EdgeInsets.only(top: 20),
-                              child: Text("Base Unit Measure",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Color.fromARGB(255, 1, 41, 75)))),
-                          SizedBox(
-                            width: 20,
-                          ),
-                          Container(
-                              // height: 80,
-                              width: MediaQuery.of(context).size.width / 2.4,
-                              // padding: EdgeInsets.only(top: 20),
-                              child: Text("Item Category Code",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Color.fromARGB(255, 1, 41, 75)))),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                              // height: 80,
-                              width: MediaQuery.of(context).size.width / 2.4,
-                              // padding: EdgeInsets.only(top: 20),
-                              child: Text(widget.basedUnit.toString(),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Colors.grey))),
-                          SizedBox(
-                            width: 20,
-                          ),
-                          Container(
-                              // height: 80,
-                              width: MediaQuery.of(context).size.width / 2.4,
-                              // padding: EdgeInsets.only(top: 20),
-                              child: Text(widget.itemCatCode.toString(),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Colors.grey))),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      ExpansionTile(
-                          title: Text("Inventory",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Color.fromARGB(255, 1, 41, 75)))),
-                    ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          AppCard(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SmallCapsLabel("Product Description"),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    displayValue(widget.Description),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
                   ),
                 ),
-              )
-            ],
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    "ID No: ${displayValue(widget.No)}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          AppCard(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              children: [
+                _infoRow("Category Name", displayValue(widget.itemCatCode)),
+                _gap(),
+                _infoRow("Description", displayValue(widget.description2)),
+                _gap(),
+                _infoRow("Blocked",
+                    widget.block.toString().replaceAll("null", "false")),
+                _gap(),
+                _infoRow("Base Unit Measure", displayValue(widget.basedUnit)),
+                _gap(),
+                _infoRow(
+                    "Item Category Code", displayValue(widget.itemCatCode)),
+              ],
+            ),
+          ),
+          AppCard(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: ExpansionTile(
+              shape: const Border(),
+              collapsedShape: const Border(),
+              leading: const IconBadge(
+                icon: Icons.inventory_2_outlined,
+                color: AppColors.primary,
+                size: 36,
+              ),
+              title: const Text(
+                "Inventory",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _gap() => const SizedBox(height: 12);
+
+  Widget _infoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13.5, color: AppColors.textMuted),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

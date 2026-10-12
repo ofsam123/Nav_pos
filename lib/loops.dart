@@ -54,7 +54,7 @@
 //           builder: (context, snapshot) {
 //             if (snapshot.connectionState == ConnectionState.waiting) {
 //               return Center(
-//                 child: CircularProgressIndicator(),
+//                 child: AppLoader(),
 //               );
 //             } else if (snapshot.hasError) {
 //               return Center(
@@ -130,7 +130,7 @@
 //               );
 //             } else {
 //               return Center(
-//                 child: CircularProgressIndicator(),
+//                 child: AppLoader(),
 //               );
 //             }
 //           },

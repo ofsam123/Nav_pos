@@ -6,7 +6,10 @@ import 'package:nav_pos/API.dart';
 import 'package:nav_pos/apiHelper.dart';
 import 'package:nav_pos/loginPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
+
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class ResetPassword extends StatefulWidget {
   ResetPassword({required this.User_Security_ID});
@@ -36,46 +39,72 @@ class _ResetPasswordState extends State<ResetPassword> {
   //   });
   // }
 
+  Widget _fieldLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 6),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textDark,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Reset Password'),
-        centerTitle: true,
+        title: const Text('Reset Password'),
       ),
-      body: Container(
-        child: Padding(
-          padding: const EdgeInsets.all(30.0),
-          child: SingleChildScrollView(
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        children: [
+          const SizedBox(height: 12),
+          Center(
+            child: Container(
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(
+                color: AppColors.primarySoft,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.password,
+                  size: 34, color: AppColors.primary),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "Create a new password",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            "Enter and confirm your new password below.",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 24),
+          const SmallCapsLabel("Security"),
+          AppCard(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  height: 50,
-                ),
-                Icon(Icons.password, size: 55),
-                SizedBox(height: 20),
-                SizedBox(
-                  height: 50,
-                ),
                 // Text(widget.User_Security_ID.toString()),
+                _fieldLabel("New Password"),
                 TextField(
                   controller: newPasswordController,
                   obscureText: obscureTextNewPassword,
                   decoration: InputDecoration(
                     hintText: 'New Password',
-                    filled: true,
-                    fillColor: Colors.blueGrey[50],
-                    labelStyle: TextStyle(fontSize: 12),
-                    contentPadding: EdgeInsets.only(left: 30),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blueGrey),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blueGrey),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
+                    prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(obscureTextNewPassword
                           ? Icons.visibility_off
@@ -88,24 +117,14 @@ class _ResetPasswordState extends State<ResetPassword> {
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 14),
+                _fieldLabel("Confirm Password"),
                 TextField(
                   controller: confirmPasswordController,
                   obscureText: obscureTextConfirmPassword,
                   decoration: InputDecoration(
                     hintText: 'Confirm Password',
-                    filled: true,
-                    fillColor: Colors.blueGrey[50],
-                    labelStyle: TextStyle(fontSize: 12),
-                    contentPadding: EdgeInsets.only(left: 30),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blueGrey),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blueGrey),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
+                    prefixIcon: const Icon(Icons.lock_reset_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(obscureTextConfirmPassword
                           ? Icons.visibility_off
@@ -119,34 +138,21 @@ class _ResetPasswordState extends State<ResetPassword> {
                     ),
                   ),
                 ),
-                SizedBox(height: 50),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: ElevatedButton(
-                    child: Container(
-                      width: double.infinity,
-                      height: 50,
-                      child: Center(child: Text("Submit")),
-                    ),
-                    onPressed: () {
-                      _resetP();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
-        ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                _resetP();
+              },
+              icon: const Icon(Icons.check_rounded),
+              label: const Text("Submit"),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -168,10 +174,10 @@ class _ResetPasswordState extends State<ResetPassword> {
       // Passwords do not match, display an error message or take appropriate action.
       // You might want to show a snackbar or alert dialog to inform the user.
     }
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
-      message: "reseting ...",
+      message: "Resetting password ...",
     );
     SharedPreferences prefs = await SharedPreferences.getInstance();
 

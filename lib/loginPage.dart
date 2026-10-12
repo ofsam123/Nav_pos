@@ -7,7 +7,7 @@ import 'package:nav_pos/bottomNavigation.dart';
 import 'package:nav_pos/resetPassword.dart';
 import 'package:nav_pos/verifyUserNamePassword.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 
 import 'API.dart';
 import 'apiHelper.dart';
@@ -32,18 +32,8 @@ class _loginPageState extends State<loginPage> {
     // return const Placeholder();
 
     return Scaffold(
-      backgroundColor: Color(0xFFf5f5f5),
-      body: ListView(
-        padding: EdgeInsets.symmetric(
-            horizontal: MediaQuery.of(context).size.width / 8),
-        children: [
-          Menu(),
-          // MediaQuery.of(context).size.width >= 980
-          //     ? Menu()
-          //     : SizedBox(), // Responsive
-          Body()
-        ],
-      ),
+      backgroundColor: Colors.white,
+      body: Body(),
     );
   }
 }
@@ -147,57 +137,148 @@ class _BodyState extends State<Body> {
   var passwordController = TextEditingController();
 
   bool obscureTextConfirmPassword = true;
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            height: 40,
-          ),
-          Container(height: 200, child: Image.asset("assets/images/poss.png")),
-          TextField(
-            controller: userController,
-            decoration: InputDecoration(
-              hintText: 'User Name',
-              filled: true,
-              fillColor: Colors.blueGrey[50],
-              labelStyle: TextStyle(fontSize: 12),
-              contentPadding: EdgeInsets.only(left: 30),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blueGrey),
-                borderRadius: BorderRadius.circular(15),
+
+  static const _headerTop = Color(0xFF0A2C7E);
+  static const _headerBottom = Color(0xFF1D5ED6);
+  static const _buttonBlue = Color(0xFF0B3FA8);
+  static const _titleNavy = Color(0xFF0F1D4A);
+  static const _fieldFill = Color(0xFFF3F5F9);
+  static const _fieldBorder = Color(0xFFE2E6EE);
+  static const _hintGrey = Color(0xFF6B7280);
+
+  InputDecoration _fieldDecoration({
+    required String hint,
+    required IconData icon,
+    Widget? suffix,
+  }) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: _fieldBorder),
+    );
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: _hintGrey, fontSize: 16),
+      filled: true,
+      fillColor: _fieldFill,
+      contentPadding: const EdgeInsets.symmetric(vertical: 20),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.only(left: 18, right: 12),
+        child: Icon(icon, color: _hintGrey, size: 26),
+      ),
+      prefixIconConstraints: const BoxConstraints(minWidth: 56),
+      suffixIcon: suffix,
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border.copyWith(
+        borderSide: const BorderSide(color: _buttonBlue, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 36, 24, 44),
+        child: Column(
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.18),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blueGrey),
-                borderRadius: BorderRadius.circular(15),
+              child: const Icon(
+                Icons.point_of_sale_rounded,
+                size: 76,
+                color: Color(0xFF0B2A6F),
               ),
             ),
+            const SizedBox(height: 22),
+            const Text(
+              "Nav POS",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 46,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(width: 30, height: 1.5, color: Colors.white70),
+                const SizedBox(width: 12),
+                const Text(
+                  "Sales & Distribution",
+                  style: TextStyle(color: Colors.white, fontSize: 17),
+                ),
+                const SizedBox(width: 12),
+                Container(width: 30, height: 1.5, color: Colors.white70),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          "Welcome back",
+          style: TextStyle(
+            color: _titleNavy,
+            fontSize: 34,
+            fontWeight: FontWeight.w700,
           ),
-          SizedBox(height: 30),
-          TextField(
-            controller: passwordController,
-            obscureText: obscureTextConfirmPassword,
-            decoration: InputDecoration(
-              hintText: ' Password',
-              filled: true,
-              fillColor: Colors.blueGrey[50],
-              labelStyle: TextStyle(fontSize: 12),
-              contentPadding: EdgeInsets.only(left: 30),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blueGrey),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blueGrey),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              suffixIcon: IconButton(
-                icon: Icon(obscureTextConfirmPassword
-                    ? Icons.visibility_off
-                    : Icons.visibility),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          "Sign in with your company account",
+          style: TextStyle(color: Color(0xFF4B5563), fontSize: 15),
+        ),
+        const SizedBox(height: 30),
+        TextField(
+          controller: userController,
+          textInputAction: TextInputAction.next,
+          style: const TextStyle(fontSize: 16),
+          decoration: _fieldDecoration(
+            hint: 'Username',
+            icon: Icons.person_outline_rounded,
+          ),
+        ),
+        const SizedBox(height: 18),
+        TextField(
+          controller: passwordController,
+          obscureText: obscureTextConfirmPassword,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _getSalesHeader(),
+          style: const TextStyle(fontSize: 16),
+          decoration: _fieldDecoration(
+            hint: 'Password',
+            icon: Icons.lock_outline_rounded,
+            suffix: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                icon: Icon(
+                  obscureTextConfirmPassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  color: _hintGrey,
+                  size: 26,
+                ),
                 onPressed: () {
                   setState(() {
                     obscureTextConfirmPassword = !obscureTextConfirmPassword;
@@ -206,87 +287,99 @@ class _BodyState extends State<Body> {
               ),
             ),
           ),
-          Row(
-            // mainAxisAlignment: MainAxisAlignment.center,
-            // crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Spacer(),
-              // TextButton(
-              //     onPressed: () {
-              //       Navigator.push(
-              //           context,
-              //           MaterialPageRoute(
-              //               builder: (context) => verifyUserName()));
-              //     },
-              //     child: Text(
-              //       'Set Password',
-              //       style: TextStyle(
-              //           fontWeight: FontWeight.bold, color: Colors.black),
-              //     ))
-            ],
-          ),
-          SizedBox(height: 40),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(30),
+        ),
+        const SizedBox(height: 26),
+        SizedBox(
+          height: 60,
+          child: ElevatedButton(
+            onPressed: () {
+              _getSalesHeader();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _buttonBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            child: ElevatedButton(
-              child: Container(
-                  width: double.infinity,
-                  height: 50,
-                  child: Center(child: Text("Sign In"))),
-              onPressed: () {
-                // _loginFunc();
-                _getSalesHeader();
-                // Navigator.push(context,
-                //     MaterialPageRoute(builder: (context) => OTP_Page()));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
+            child: const Text("Sign In"),
+          ),
+        ),
+        const SizedBox(height: 40),
+        const Text(
+          "Powered by Synergy Center",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Color(0xFF4B5563), fontSize: 14),
+        ),
+        const SizedBox(height: 14),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.sync_rounded, size: 22, color: Color(0xFF6B7280)),
+            SizedBox(width: 8),
+            Text(
+              "v1.0",
+              style: TextStyle(color: Color(0xFF4B5563), fontSize: 15),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [_headerTop, _headerBottom],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: CustomPaint(
+        painter: _HeaderWavesPainter(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildHeader(context),
+                      Expanded(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(32),
+                            ),
+                          ),
+                          padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: ConstrainedBox(
+                              constraints:
+                                  const BoxConstraints(maxWidth: 440),
+                              child: _buildForm(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          SizedBox(height: 40),
-          Row(children: [
-            Expanded(
-              child: Divider(
-                color: Colors.grey[300],
-                height: 50,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text("Terms and Conditions"),
-            ),
-            Expanded(
-              child: Divider(
-                color: Colors.grey[400],
-                height: 50,
-              ),
-            ),
-          ]),
-          SizedBox(height: 40),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // _loginWithButton(image: 'images/google.png'),
-              // _loginWithButton(image: 'images/github.png', isActive: true),
-              // _loginWithButton(image: 'images/facebook.png'),
-            ],
-          ),
-          SizedBox(
-            height: 20,
-          ),
-          Text(
-            "Powered By Synergy Center",
-            style: TextStyle(color: Color.fromARGB(255, 214, 211, 211)),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -297,10 +390,10 @@ class _BodyState extends State<Body> {
       return;
     }
 
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
-      message: "Login ...",
+      message: "Signing in ...",
     );
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -387,6 +480,40 @@ class _BodyState extends State<Body> {
       helper.flushBar2("Error", "Try again", context);
     }
   }
+}
+
+class _HeaderWavesPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    paint.color = Colors.white.withOpacity(0.06);
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, h * 0.22)
+        ..quadraticBezierTo(w * 0.35, h * 0.12, w * 0.6, h * 0.24)
+        ..quadraticBezierTo(w * 0.85, h * 0.36, w, h * 0.26)
+        ..lineTo(w, h * 0.45)
+        ..lineTo(0, h * 0.45)
+        ..close(),
+      paint,
+    );
+
+    paint.color = Colors.white.withOpacity(0.05);
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.45, 0)
+        ..quadraticBezierTo(w * 0.7, h * 0.12, w, h * 0.08)
+        ..lineTo(w, 0)
+        ..close(),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 //CHECK IF THE passwordController == THE Password_POS
 // and the Change_Password_POS == true  Alert the use to reset his password

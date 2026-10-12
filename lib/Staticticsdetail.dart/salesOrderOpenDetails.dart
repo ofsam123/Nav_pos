@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -13,6 +14,39 @@ import '../Models/itemsSoldModel.dart';
 import '../Models/postedInvoiceDetailsModel.dart';
 import '../Models/postedSalesInvoiceModel.dart';
 import '../apiHelper.dart';
+import '../theme/app_theme.dart';
+import '../widgets/app_widgets.dart';
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.label, required this.value, this.valueColor});
+
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 13.5, color: AppColors.textMuted),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: valueColor ?? AppColors.textDark,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class SalesOrderDetails extends StatefulWidget {
   SalesOrderDetails({required this.docsNo});
@@ -61,130 +95,94 @@ class _SalesOrderDetailsState extends State<SalesOrderDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          "Sales Order",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        // automaticallyImplyLeading: false,
-        centerTitle: true,
-      ),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              FutureBuilder(
-                future: _func,
-                builder: (context, data) {
-                  if (data.hasError) {
-                    return Center(
-                        child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text("Oops!! 😔"),
-                        Text("Failed later"),
-                      ],
-                    ));
-                  } else if (data.hasData) {
-                    var items = data.data as List<postedSaledDetailsModel>;
-                    return ListView.builder(
-                        itemCount: items == null ? 0 : items.length,
-                        physics: ClampingScrollPhysics(),
-                        shrinkWrap: true,
-                        scrollDirection: Axis.vertical,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.all(2),
-                            child: GestureDetector(
-                              onTap: () {},
-                              child: Card(
-                                color: Color.fromARGB(255, 246, 246, 246),
-                                child: Column(
-                                  children: [
-                                    ListTile(
-                                      leading: Icon(Icons.numbers),
-                                      title: Text(
-                                        "NO: ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index].No.toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                    ListTile(
-                                      leading: Icon(Icons.details),
-                                      title: Text(
-                                        "Description: ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index].Description.toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                    ListTile(
-                                      leading: Icon(Icons.numbers_outlined),
-                                      title: Text(
-                                        "Quantity: ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index].Quantity.toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                    ListTile(
-                                      leading: Icon(Icons.money),
-                                      title: Text(
-                                        "Amount Including VAT : ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        items[index]
-                                            .Amount_Including_VAT
-                                            .toString(),
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      // trailing: Icon(Icons.arrow_forward_ios),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        });
-                  } else {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+      appBar: AppBar(title: const Text('Sales Order')),
+      body: FutureBuilder(
+        future: _func,
+        builder: (context, data) {
+          if (data.hasError) {
+            return const EmptyState(
+              icon: Icons.cloud_off_rounded,
+              title: 'Failed to load data',
+              message: 'Please check your connection and try again later.',
+            );
+          } else if (data.hasData) {
+            var items = data.data as List<postedSaledDetailsModel>;
+            if (items.isEmpty) {
+              return const EmptyState(
+                icon: Icons.receipt_long_outlined,
+                title: 'No order lines found',
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return AppCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  onTap: () {},
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Container(
-                              height: 140,
-                              child: Image.asset("assets/images/loading.gif"))
+                          const IconBadge(
+                            icon: Icons.inventory_2_rounded,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.Description.toString(),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textDark,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'No. ${item.No.toString()}',
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
+                      const SizedBox(height: 14),
+                      Container(height: 1, color: AppColors.border),
+                      const SizedBox(height: 12),
+                      _InfoRow(
+                        label: 'Quantity',
+                        value: item.Quantity.toString(),
+                      ),
+                      const SizedBox(height: 8),
+                      _InfoRow(
+                        label: 'Amount Including VAT',
+                        value: 'GH₵ ${item.Amount_Including_VAT.toString()}',
+                        valueColor: AppColors.success,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          } else {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 60),
+              child: Center(child: AppLoader()),
+            );
+          }
+        },
       ),
     );
   }
@@ -194,8 +192,8 @@ class _SalesOrderDetailsState extends State<SalesOrderDetails> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String resCenter = (prefs.getString('Sales_Resp_Ctr_Filter') ?? '');
 
-    // SimpleFontelicoProgressDialog progressDialog =
-    //     SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    // AppLoadingDialog progressDialog =
+    //     AppLoadingDialog(context: context, barrierDimisable: true);
     // progressDialog.show(
     //   message: "loading ...",
     // );

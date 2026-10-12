@@ -1,7 +1,9 @@
 class ApiUrl {
+  
 //Dev
   static const String MainIP =
-      "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/";
+      // "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/";
+      "http://40.67.140.177:7048/DynamicsNAV110/ODataV4/Company('WAGCOL%20POS')/";//ZZZ%20TEST%20FOR%20WAGCOL
   static const String APIusername = "INTRANET" + r'\' + "NAV.CLOUD";
   static const String APIpassword =
       "Ek88JQH7tAFFqsbw7xxcl8S4X+Z+JY0py2gWqQMCAe8=";
@@ -12,10 +14,17 @@ class ApiUrl {
 //   static const String APIusername     = "";
 //   static const String APIpassword     = "";
 
+
+
   static const String ItemAPI = MainIP + "ItemsAPI";
   static const String VisitationApi = MainIP + "VisitationAPI";
 
   static const String registerCustomer = MainIP + "CustomerAPI";
+  static String customerById(String customerId) =>
+      MainIP +
+      "CustomerAPI('" +
+      Uri.encodeComponent(customerId.replaceAll("'", "''")) +
+      "')";
   static const String customerAPI =
       MainIP + "CustomerAPI?" + "\$" + "filter=Responsibility_Center eq '";
   static const String SalesHeaderAPI = MainIP + "SalesHeaderAPI";

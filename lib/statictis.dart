@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:nav_pos/apiHelper.dart';
 import 'package:nav_pos/scanQr.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 
 import 'API.dart';
 import 'ReturnOrderLogic.dart';
@@ -18,6 +18,8 @@ import 'Staticticsdetail.dart/postedSales.dart';
 import 'Staticticsdetail.dart/returnOrder.dart';
 import 'Staticticsdetail.dart/salesOrderOpen.dart';
 import 'Staticticsdetail.dart/transferToRecieve.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class statics extends StatefulWidget {
   const statics({super.key});
@@ -239,27 +241,33 @@ class _staticsState extends State<statics> {
     final itemsLeft = difference < 0 ? 0 : difference;
     final hasItemsLeft = itemsLeft > 0;
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Row(
+    return Container(
+      constraints: const BoxConstraints(minWidth: 112),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             itemsLeft.toString(),
             style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: hasItemsLeft ? Colors.green[700] : Colors.red,
+              fontSize: 32,
+              height: 1.1,
+              fontWeight: FontWeight.w700,
+              color: hasItemsLeft ? AppColors.textDark : AppColors.danger,
             ),
           ),
-          SizedBox(width: 6),
+          const SizedBox(height: 2),
           Text(
-            hasItemsLeft ? "ITEMS LEFT\nTODAY" : "NO ITEMS\nLEFT TODAY",
+            hasItemsLeft ? "ITEMS LEFT TODAY" : "NO ITEMS LEFT TODAY",
             style: TextStyle(
-              fontSize: 10,
-              height: 1.1,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
+              fontSize: 9.5,
+              letterSpacing: 0.3,
+              fontWeight: FontWeight.w700,
+              color: hasItemsLeft ? AppColors.textDark : AppColors.danger,
             ),
           ),
         ],
@@ -278,587 +286,194 @@ class _staticsState extends State<statics> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color.fromRGBO(247, 250, 255, 1),
-      appBar: AppBar(
-        title: Text(
-          UserName.toString(),
-          // resCenter1.toString(),
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        automaticallyImplyLeading: false,
-        elevation: 0,
-        actions: [_buildItemsLeftToday()],
+  String get _greeting {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  }
+
+  void _open(Widget page) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+  }
+
+  Widget _statRow(Widget left, Widget right) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: left),
+          const SizedBox(width: 14),
+          Expanded(child: right),
+        ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: Container(
-          // color: Color.fromRGBO(243, 241, 241, 0.976),
-          // color: Color.RGB 230, 230, 230,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Text(
-                    "For Release",
-                    style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.brandGradient,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 18, 24),
+          child: Row(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF8EBBF5),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  initialsOf(UserName),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
                   ),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => PostedSales(
-                                        responsibilityCenter:
-                                            resCenter1.toString(),
-                                      )));
-                        },
-                        child: Container(
-                          height: 130,
-                          width: MediaQuery.of(context).size.width / 2.3,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                offset: Offset(0, 0),
-                                blurRadius: 2,
-                                spreadRadius: 2,
-                                color: Color.fromARGB(66, 201, 201, 201),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Spacer(),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.file_copy,
-                                    color: Colors.blue,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 20),
-                                    child: Text(
-                                      poi,
-                                      style: TextStyle(
-                                          fontSize: 39,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  )
-                                ],
-                              ),
-                              Spacer(),
-                              Text(
-                                "Posted Sales Invoice",
-                                style: TextStyle(fontSize: 16),
-                              )
-                            ],
-                          ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _greeting,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        UserName.toString(),
+                        maxLines: 1,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
                         ),
-                      ),
-                      SizedBox(
-                        width: 20,
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => salesOrder(
-                                        resCenter: resCenter1.toString(),
-                                      )));
-                        },
-                        child: Container(
-                          height: 130,
-                          width: MediaQuery.of(context).size.width / 2.3,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                offset: Offset(0, 0),
-                                blurRadius: 2,
-                                spreadRadius: 2,
-                                color: Color.fromARGB(66, 201, 201, 201),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Spacer(),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.file_copy,
-                                    color: Colors.blue,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 20),
-                                    child: Text(
-                                      salesoP,
-                                      style: TextStyle(
-                                          fontSize: 39,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  )
-                                ],
-                              ),
-                              Spacer(),
-                              Text(
-                                "Sales Orders-Open",
-                                style: TextStyle(fontSize: 16),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 45,
-                  ),
-                  Container(
-                    height: 10,
-                    color: Colors.blue,
-                  ),
-                  Text(
-                    "My Day Totals",
-                    style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => totalItemsSold(
-                                        resCenter: resCenter1.toString(),
-                                      )));
-                        },
-                        child: Container(
-                          height: 130,
-                          width: MediaQuery.of(context).size.width / 2.3,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                offset: Offset(0, 0),
-                                blurRadius: 2,
-                                spreadRadius: 2,
-                                color: Color.fromARGB(66, 201, 201, 201),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Spacer(),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.file_copy,
-                                    color: Colors.blue,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 20),
-                                    child: Text(
-                                      totalQuantity1,
-                                      // "0",
-                                      style: TextStyle(
-                                          fontSize: 39,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  )
-                                ],
-                              ),
-                              Spacer(),
-                              Text(
-                                "Total Item Sold",
-                                style: TextStyle(fontSize: 16),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 20,
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => totalItemsRevived(
-                                        responsibilityCenter:
-                                            resCenter1.toString(),
-                                      )));
-                        },
-                        child: Container(
-                          height: 130,
-                          width: MediaQuery.of(context).size.width / 2.3,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                offset: Offset(0, 0),
-                                blurRadius: 2,
-                                spreadRadius: 2,
-                                color: Color.fromARGB(66, 201, 201, 201),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Spacer(),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.file_copy,
-                                    color: Colors.blue,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 20),
-                                    child: Text(
-                                      myTotalItemReceived,
-                                      style: TextStyle(
-                                          fontSize: 39,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  )
-                                ],
-                              ),
-                              Spacer(),
-                              Text(
-                                "Total item Received",
-                                style: TextStyle(fontSize: 16),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => totalItemsSold(
-                                    resCenter: resCenter1.toString(),
-                                  )));
-                    },
-                    child: Container(
-                      height: 130,
-                      width: MediaQuery.of(context).size.width / 2.3,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            offset: Offset(0, 0),
-                            blurRadius: 2,
-                            spreadRadius: 2,
-                            color: Color.fromARGB(66, 201, 201, 201),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Spacer(),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.file_copy,
-                                color: Colors.blue,
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(right: 20),
-                                child: Container(
-                                  height: 50,
-                                  width: 110,
-                                  child: Text(
-                                    totalAmount1,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                    style: TextStyle(
-                                        fontSize: 39,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              )
-                            ],
-                          ),
-                          Spacer(),
-                          Text(
-                            "Total Amount Sold",
-                            style: TextStyle(fontSize: 16),
-                          )
-                        ],
                       ),
                     ),
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Container(
-                    height: 10,
-                    color: Colors.blue,
-                  ),
-                  Text("Transfer Activities",
-                      style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold)),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Row(
-                    children: [
-                      // GestureDetector(
-                      //   onTap: () {
-                      //     // Navigator.push(
-                      //     //     context, (context) => myTransferOrder());
-                      //     Navigator.push(
-                      //         context,
-                      //         MaterialPageRoute(
-                      //             builder: (context) => myTransferOrder(
-                      //                   responsibilityCenter:
-                      //                       resCenter1.toString(),
-                      //                 )));
-                      //   },
-                      //   child: Container(
-                      //     height: 130,
-                      //     width: MediaQuery.of(context).size.width / 2.3,
-                      //     decoration: BoxDecoration(
-                      //       color: Colors.white,
-                      //       borderRadius: BorderRadius.circular(15),
-                      //       boxShadow: [
-                      //         BoxShadow(
-                      //           offset: Offset(0, 0),
-                      //           blurRadius: 2,
-                      //           spreadRadius: 2,
-                      //           color: Color.fromARGB(66, 201, 201, 201),
-                      //         ),
-                      //       ],
-                      //     ),
-                      //     child: Column(
-                      //       crossAxisAlignment: CrossAxisAlignment.center,
-                      //       mainAxisAlignment: MainAxisAlignment.center,
-                      //       children: [
-                      //         Spacer(),
-                      //         Row(
-                      //           crossAxisAlignment: CrossAxisAlignment.center,
-                      //           mainAxisAlignment: MainAxisAlignment.center,
-                      //           children: [
-                      //             Icon(
-                      //               Icons.file_copy,
-                      //               color: Colors.blue,
-                      //             ),
-                      //             Padding(
-                      //               padding: const EdgeInsets.only(right: 20),
-                      //               child: Text(
-                      //                 myOrderTransfer,
-                      //                 style: TextStyle(
-                      //                     fontSize: 39,
-                      //                     fontWeight: FontWeight.bold),
-                      //               ),
-                      //             )
-                      //           ],
-                      //         ),
-                      //         Spacer(),
-                      //         Text(
-                      //           "My Transfer Orders",
-                      //           style: TextStyle(fontSize: 16),
-                      //         )
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ),
-
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => TransferToRecieve(
-                                        responsCenter: resCenter1.toString(),
-                                      )));
-                        },
-                        child: Container(
-                          height: 130,
-                          width: MediaQuery.of(context).size.width / 2.3,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                offset: Offset(0, 0),
-                                blurRadius: 2,
-                                spreadRadius: 2,
-                                color: Color.fromARGB(66, 201, 201, 201),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Spacer(),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.file_copy,
-                                    color: Colors.blue,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 20),
-                                    child: Text(
-                                      traffer1,
-                                      style: TextStyle(
-                                          fontSize: 39,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  )
-                                ],
-                              ),
-                              Spacer(),
-                              Text(
-                                "Transfer To Receive",
-                                style: TextStyle(fontSize: 16),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 20,
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => returnOrder()));
-                        },
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => ReturnOrderLogic(
-                                          rc: resCenter1.toString(),
-                                        )));
-                          },
-                          child: Container(
-                            height: 130,
-                            width: MediaQuery.of(context).size.width / 2.3,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  offset: Offset(0, 0),
-                                  blurRadius: 2,
-                                  spreadRadius: 2,
-                                  color: Color.fromARGB(66, 201, 201, 201),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Spacer(),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.file_copy,
-                                      color: Colors.blue,
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 20),
-                                      child: Text(
-                                        difference.toString(),
-                                        style: TextStyle(
-                                            fontSize: 39,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Spacer(),
-                                Text(
-                                  "Return Transafers",
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 30,
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              _buildItemsLeftToday(),
+            ],
           ),
         ),
       ),
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          children: [
+            _buildHeader(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SectionLabel("My Day"),
+                  _statRow(
+                    StatCard(
+                      icon: Icons.shopping_cart_rounded,
+                      color: AppColors.success,
+                      value: totalQuantity1,
+                      label: "Items Sold",
+                      onTap: () => _open(totalItemsSold(
+                        resCenter: resCenter1.toString(),
+                      )),
+                    ),
+                    StatCard(
+                      icon: Icons.inventory_2_outlined,
+                      color: AppColors.primaryLight,
+                      value: myTotalItemReceived,
+                      label: "Items Received",
+                      onTap: () => _open(totalItemsRevived(
+                        responsibilityCenter: resCenter1.toString(),
+                      )),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  _statRow(
+                    StatCard(
+                      icon: Icons.local_shipping_outlined,
+                      color: AppColors.warning,
+                      value: totalAmount1,
+                      label: "Amount Sold",
+                      onTap: () => _open(totalItemsSold(
+                        resCenter: resCenter1.toString(),
+                      )),
+                    ),
+                    StatCard(
+                      icon: Icons.receipt_long_outlined,
+                      color: AppColors.purple,
+                      value: salesoP,
+                      label: "Open Orders",
+                      onTap: () => _open(salesOrder(
+                        resCenter: resCenter1.toString(),
+                      )),
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  const SectionLabel("Transfers"),
+                  NavRowCard(
+                    icon: Icons.download_rounded,
+                    color: AppColors.primaryLight,
+                    title: "Transfer to Receive",
+                    value: traffer1,
+                    onTap: () => _open(TransferToRecieve(
+                      responsCenter: resCenter1.toString(),
+                    )),
+                  ),
+                  NavRowCard(
+                    icon: Icons.undo_rounded,
+                    color: AppColors.purple,
+                    title: "Return Transfers",
+                    value: difference.toString(),
+                    onTap: () => _open(ReturnOrderLogic(
+                      rc: resCenter1.toString(),
+                    )),
+                  ),
+                  const SizedBox(height: 10),
+                  const SectionLabel("Sales"),
+                  NavRowCard(
+                    icon: Icons.description_outlined,
+                    color: AppColors.primary,
+                    title: "Posted Sales Invoices",
+                    value: poi,
+                    onTap: () => _open(PostedSales(
+                      responsibilityCenter: resCenter1.toString(),
+                    )),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _getResponsibiltyCenter() async {
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );
@@ -920,8 +535,8 @@ class _staticsState extends State<statics> {
   Future<void> _totalItemSold() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String Location_Code = (prefs.getString('Location_Code') ?? '');
-    // SimpleFontelicoProgressDialog progressDialog =
-    //     SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    // AppLoadingDialog progressDialog =
+    //     AppLoadingDialog(context: context, barrierDimisable: true);
     // progressDialog.show(
     //   message: "Loading ...",
     // );
@@ -1202,8 +817,8 @@ class _staticsState extends State<statics> {
   Future<void> _myTotalItemRevied() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String Location_Code = (prefs.getString('Location_Code') ?? '');
-    // SimpleFontelicoProgressDialog progressDialog =
-    //     SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    // AppLoadingDialog progressDialog =
+    //     AppLoadingDialog(context: context, barrierDimisable: true);
     // progressDialog.show(
     //   message: "Loading ...",
     // );

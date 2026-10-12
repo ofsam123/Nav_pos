@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 import 'package:intl/intl.dart';
 import 'package:nav_pos/trackDeatails.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'API.dart';
 import 'Models/visitationModel.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class trackVisitation extends StatefulWidget {
   const trackVisitation({super.key});
@@ -53,20 +56,24 @@ class _trackVisitationState extends State<trackVisitation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          'Track Visitation',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Visits'),
         automaticallyImplyLeading: false,
-        centerTitle: true,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        shape: const Border(),
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: Colors.black),
+            tooltip: "Refresh",
+            icon: const Icon(Icons.sync_rounded, color: Colors.white, size: 28),
             onPressed: _refresh,
           ),
+          const SizedBox(width: 6),
         ],
       ),
       body: RefreshIndicator(
@@ -75,17 +82,24 @@ class _trackVisitationState extends State<trackVisitation> {
           future: _visitsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: AppLoader());
             }
             if (snapshot.hasError) {
-              return _MessageView(
-                icon: Icons.cloud_off,
-                title: "Oops!! 😔",
-                message: "Failed to load visitations",
-                action: ElevatedButton(
-                  onPressed: _refresh,
-                  child: Text("Retry"),
-                ),
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  const SizedBox(height: 60),
+                  EmptyState(
+                    icon: Icons.cloud_off_rounded,
+                    title: "Failed to load visitations",
+                    message: "Check your connection and try again.",
+                    action: OutlinedButton.icon(
+                      onPressed: _refresh,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text("Retry"),
+                    ),
+                  ),
+                ],
               );
             }
 
@@ -102,31 +116,53 @@ class _trackVisitationState extends State<trackVisitation> {
                     .where((v) => _isSameDay(v.visitedAt, _selectedDate!))
                     .toList();
 
+            final currentOutcome = visits.isEmpty
+                ? ''
+                : (visits.first.Outcome_of_the_visit ?? '').trim();
+
             return ListView(
-              physics: AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 32),
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 32),
               children: [
                 if (visits.isNotEmpty) ...[
                   _CurrentVisitCard(
                     visit: visits.first,
                     onTap: () => _openDetails(visits.first),
                   ),
-                  SizedBox(height: 20),
+                  if (currentOutcome.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
+                      child: Text(
+                        currentOutcome,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
                 ],
                 _buildFilterBar(),
-                SizedBox(height: 12),
-                Text(
-                  "${filtered.length} visit${filtered.length == 1 ? '' : 's'}"
-                  "${_selectedDate == null ? '' : ' on ${_formatDay(_selectedDate!)}'}",
-                  style: TextStyle(
-                      color: Colors.grey[700], fontWeight: FontWeight.w600),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    "${filtered.length} visit${filtered.length == 1 ? '' : 's'}"
+                    "${_selectedDate == null ? '' : ' ${_isSameDay(_selectedDate, DateTime.now()) ? 'today' : 'on ${_formatDay(_selectedDate!)}'}'}",
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 15,
+                    ),
+                  ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 6),
                 if (filtered.isEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 40),
-                    child: _MessageView(
-                      icon: Icons.event_busy,
+                    padding: const EdgeInsets.only(top: 30),
+                    child: EmptyState(
+                      icon: Icons.event_busy_rounded,
                       title: "No visitations",
                       message: _selectedDate == null
                           ? "You have not recorded any visits yet"
@@ -150,25 +186,24 @@ class _trackVisitationState extends State<trackVisitation> {
     final isCustom = !isAll && !isToday;
 
     return Wrap(
-      spacing: 8,
+      spacing: 10,
       runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        ChoiceChip(
-          label: Text("All"),
+        _FilterPill(
+          label: "All",
           selected: isAll,
-          onSelected: (_) => setState(() => _selectedDate = null),
+          onTap: () => setState(() => _selectedDate = null),
         ),
-        ChoiceChip(
-          label: Text("Today"),
+        _FilterPill(
+          label: "Today",
           selected: isToday,
-          onSelected: (_) => setState(() => _selectedDate = today),
+          onTap: () => setState(() => _selectedDate = today),
         ),
-        ChoiceChip(
-          avatar: Icon(Icons.calendar_today, size: 16),
-          label: Text(isCustom ? _formatDay(_selectedDate!) : "Pick date"),
+        _FilterPill(
+          label: isCustom ? _formatDay(_selectedDate!) : "Pick date",
+          trailingIcon: Icons.calendar_month_outlined,
           selected: isCustom,
-          onSelected: (_) => _pickDate(),
+          onTap: _pickDate,
         ),
       ],
     );
@@ -183,14 +218,8 @@ class _trackVisitationState extends State<trackVisitation> {
       if (header != currentHeader) {
         currentHeader = header;
         widgets.add(Padding(
-          padding: const EdgeInsets.only(top: 12, bottom: 6),
-          child: Text(
-            header,
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[600]),
-          ),
+          padding: const EdgeInsets.only(top: 14),
+          child: SmallCapsLabel(header),
         ));
       }
       widgets.add(_VisitCard(visit: visit, onTap: () => _openDetails(visit)));
@@ -249,11 +278,59 @@ String _formatTime(VisitationModel visit) {
   return DateFormat('h:mm a').format(visitedAt);
 }
 
-String _initials(String? name) {
-  final parts = (name ?? '').trim().split(RegExp(r'\s+'));
-  final letters = parts.where((p) => p.isNotEmpty).take(2).map((p) => p[0]);
-  final result = letters.join().toUpperCase();
-  return result.isEmpty ? "?" : result;
+Color _typeColor(String type) => type.toLowerCase().contains("sales")
+    ? AppColors.success
+    : AppColors.warning;
+
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.trailingIcon,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final IconData? trailingIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = selected ? Colors.white : AppColors.textDark;
+    return Material(
+      color: selected ? AppColors.primary : AppColors.surface,
+      shape: StadiumBorder(
+        side: BorderSide(
+          color: selected ? AppColors.primary : AppColors.border,
+        ),
+      ),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: fg,
+                  fontSize: 16,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+              if (trailingIcon != null) ...[
+                const SizedBox(width: 10),
+                Icon(trailingIcon, size: 20, color: fg),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _CurrentVisitCard extends StatelessWidget {
@@ -265,96 +342,112 @@ class _CurrentVisitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isToday = _isSameDay(visit.visitedAt, DateTime.now());
-    final outcome = visit.Outcome_of_the_visit ?? '';
+    final type = visit.Visitation_Type ?? '';
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color.fromRGBO(15, 86, 148, 1), Color(0xFF2E7BC4)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    Widget meta(IconData icon, String text) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20, color: Colors.white),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white, fontSize: 15),
+            ),
           ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.12),
-              blurRadius: 12,
-              offset: Offset(0, 6),
+        ],
+      );
+    }
+
+    Widget separator() => Container(
+          width: 1,
+          height: 22,
+          margin: const EdgeInsets.symmetric(horizontal: 12),
+          color: Colors.white.withOpacity(0.35),
+        );
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.primaryDark, AppColors.primaryLight],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.location_on, color: Colors.white70, size: 18),
-                SizedBox(width: 6),
-                Text(
-                  isToday ? "CURRENT VISIT" : "LAST VISIT",
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.1,
-                    fontSize: 12,
-                  ),
-                ),
-                Spacer(),
-                Icon(Icons.chevron_right, color: Colors.white70),
-              ],
-            ),
-            SizedBox(height: 12),
-            Text(
-              visit.Customer_Name ?? "Unknown customer",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              visit.CustomerID ?? "",
-              style: TextStyle(color: Colors.white70),
-            ),
-            SizedBox(height: 14),
-            Wrap(
-              spacing: 16,
-              runSpacing: 6,
-              children: [
-                _IconLabel(
-                  icon: Icons.event,
-                  text: visit.visitedAt == null
-                      ? "-"
-                      : _formatDay(visit.visitedAt!),
-                  color: Colors.white,
-                ),
-                _IconLabel(
-                  icon: Icons.access_time,
-                  text: _formatTime(visit),
-                  color: Colors.white,
-                ),
-                if ((visit.Visitation_Type ?? '').isNotEmpty)
-                  _IconLabel(
-                    icon: Icons.storefront,
-                    text: visit.Visitation_Type!,
-                    color: Colors.white,
-                  ),
-              ],
-            ),
-            if (outcome.isNotEmpty) ...[
-              SizedBox(height: 12),
-              Text(
-                outcome,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.white),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.25),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
               ),
             ],
-          ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.location_on_rounded,
+                      color: Colors.white, size: 22),
+                  const SizedBox(width: 8),
+                  Text(
+                    isToday ? "CURRENT VISIT" : "LAST VISIT",
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.4,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                visit.Customer_Name ?? "Unknown customer",
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                visit.CustomerID ?? "",
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Divider(color: Colors.white.withOpacity(0.25), height: 1),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  meta(
+                    Icons.calendar_today_outlined,
+                    visit.visitedAt == null ? "-" : _formatDay(visit.visitedAt!),
+                  ),
+                  separator(),
+                  meta(Icons.schedule_rounded, _formatTime(visit)),
+                  if (type.isNotEmpty) ...[
+                    separator(),
+                    Expanded(child: meta(Icons.work_outline_rounded, type)),
+                  ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -369,158 +462,92 @@ class _VisitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final outcome = visit.Outcome_of_the_visit ?? '';
+    final note = (visit.Outcome_of_the_visit ?? '').trim().isNotEmpty
+        ? visit.Outcome_of_the_visit!.trim()
+        : (visit.Comment ?? '').trim();
     final type = visit.Visitation_Type ?? '';
 
-    return Card(
-      color: Colors.white,
-      elevation: 0,
-      margin: EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                backgroundColor: Color.fromRGBO(15, 86, 148, 0.12),
-                child: Text(
-                  _initials(visit.Customer_Name),
-                  style: TextStyle(
-                    color: Color.fromRGBO(15, 86, 148, 1),
-                    fontWeight: FontWeight.bold,
+    return AppCard(
+      onTap: onTap,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InitialsAvatar(name: visit.Customer_Name, size: 56),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  visit.Customer_Name ?? "Unknown customer",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
                 ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            visit.Customer_Name ?? "Unknown customer",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Color.fromARGB(255, 71, 110, 129),
-                            ),
-                          ),
-                        ),
-                        Text(
-                          _formatTime(visit),
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                      ],
+                const SizedBox(height: 4),
+                Text(
+                  visit.CustomerID ?? "",
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 15,
+                  ),
+                ),
+                if (note.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    note,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 14.5,
                     ),
-                    SizedBox(height: 2),
-                    Text(
-                      visit.CustomerID ?? "",
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    ),
-                    if (type.isNotEmpty) ...[
-                      SizedBox(height: 8),
-                      Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: type.toLowerCase().contains("sales")
-                              ? Colors.green.withOpacity(0.12)
-                              : Colors.orange.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          type,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: type.toLowerCase().contains("sales")
-                                ? Colors.green[800]
-                                : Colors.orange[800],
-                          ),
-                        ),
-                      ),
-                    ],
-                    if (outcome.isNotEmpty) ...[
-                      SizedBox(height: 8),
-                      Text(
-                        outcome,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: Colors.grey[800]),
-                      ),
-                    ],
-                  ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                _formatTime(visit),
+                style: const TextStyle(
+                  color: AppColors.textDark,
+                  fontSize: 16,
                 ),
               ),
+              if (type.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _typeColor(type).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    type,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: _typeColor(type) == AppColors.success
+                          ? const Color(0xFF15803D)
+                          : const Color(0xFFC2410C),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _IconLabel extends StatelessWidget {
-  const _IconLabel(
-      {required this.icon, required this.text, required this.color});
-
-  final IconData icon;
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: color),
-        SizedBox(width: 4),
-        Text(text, style: TextStyle(color: color)),
-      ],
-    );
-  }
-}
-
-class _MessageView extends StatelessWidget {
-  const _MessageView({
-    required this.icon,
-    required this.title,
-    required this.message,
-    this.action,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-  final Widget? action;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 56, color: Colors.grey[400]),
-            SizedBox(height: 12),
-            Text(title,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            SizedBox(height: 4),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600])),
-            if (action != null) ...[SizedBox(height: 16), action!],
-          ],
-        ),
+        ],
       ),
     );
   }

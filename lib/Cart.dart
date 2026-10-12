@@ -3,10 +3,12 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:nav_pos/apiHelper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_fontellico_progress_dialog/simple_fontico_loading.dart';
+import 'package:nav_pos/widgets/app_loader.dart';
 
 import 'API.dart';
 import 'bottomNavigation.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class Cart extends StatefulWidget {
   Cart({required this.Docs_No, required this.selectedItems});
@@ -27,191 +29,74 @@ class _CartState extends State<Cart> {
       appBar: AppBar(
         title: Text(
           "Items Cart" + widget.Docs_No.toString(),
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-        centerTitle: true,
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8.0),
+            padding: const EdgeInsets.only(right: 12.0),
             child: Container(
-                height: 40,
-                width: 40,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(width: 1.0, color: Colors.grey)),
-                child: Center(child: Text("8"))),
+              height: 36,
+              width: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                "8",
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
           )
         ],
       ),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ListView.builder(
-                  itemCount: widget.selectedItems.toString().length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      title: Text(widget.selectedItems.toString()[index]),
-                    );
-                  },
+      body: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        itemCount: widget.selectedItems.toString().length,
+        itemBuilder: (context, index) {
+          return AppCard(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                const IconBadge(
+                  icon: Icons.liquor_rounded,
+                  color: AppColors.primary,
+                  size: 40,
                 ),
-
-                //  ListView.builder(
-                //     itemCount: 8,
-                //     physics: ClampingScrollPhysics(),
-                //     shrinkWrap: true,
-                //     scrollDirection: Axis.vertical,
-                //     itemBuilder: (context, index) {
-                //       return Padding(
-                //         padding: const EdgeInsets.all(2),
-                //         child: GestureDetector(
-                //           onTap: () {},
-                // child: Container(
-                //   decoration: BoxDecoration(
-                //     borderRadius: BorderRadius.circular(10),
-                //   ),
-                //   width: MediaQuery.of(context).size.width / 1.1,
-                //   child: Padding(
-                //     padding:
-                //         const EdgeInsets.only(right: 10.0, top: 7),
-                //     child: Row(
-                //       children: [
-                //         Container(
-                //           height: 100,
-                //           width: 140,
-                //           decoration: BoxDecoration(
-                //             color: const Color.fromARGB(
-                //                 255, 240, 238, 238),
-                //             // image: DecorationImage(
-                //             //     colorFilter: ColorFilter.mode(
-                //             //       Color.fromARGB(
-                //             //               255, 146, 144, 144)
-                //             //           .withOpacity(0.9),
-                //             //       BlendMode.modulate,
-                //             //     ),
-                //             //     image: NetworkImage(
-                //             //       items[index]
-                //             //           .banner
-                //             //           .toString(),
-                //             //     ),
-                //             //     fit: BoxFit.cover),
-                //             borderRadius: BorderRadius.circular(10),
-                //             // color: Color.fromARGB(101, 11, 117, 187)
-                //           ),
-                //           child: Center(
-                //             child: Container(
-                //               height: 80,
-                //               child: Image.asset(
-                //                   "assets/images/perfume.png"),
-                //             ),
-                //           ),
-                //         ),
-                //         Padding(
-                //           padding: const EdgeInsets.only(
-                //               left: 10.0, top: 10),
-                //           child: Column(
-                //             mainAxisAlignment:
-                //                 MainAxisAlignment.center,
-                //             crossAxisAlignment:
-                //                 CrossAxisAlignment.center,
-                //             children: [
-                //               Text("Sauvignon",
-                //                   style: TextStyle(
-                //                       // fontWeight: FontWeight.bold,
-                //                       fontSize: 16)),
-                //               SizedBox(
-                //                 height: 10,
-                //               ),
-                //               Row(
-                //                 children: [
-                //                   Text("GHS 200",
-                //                       style: TextStyle(
-                //                           fontWeight: FontWeight.bold,
-                //                           fontSize: 14,
-                //                           color: Colors.black))
-                //                 ],
-                //               ),
-                //             ],
-                //           ),
-                //         ),
-                //         Spacer(),
-                //         Column(
-                //           children: [
-                //             Row(
-                //               children: [
-                //                 Container(
-                //                   width: 40,
-                //                   child: TextField(
-                //                     onChanged: (value1) {
-                //                       setState(() {
-                //                         // if(quantityController)
-                //                       });
-                //                     },
-                //                     // controller: quantityController,
-                //                     textAlign: TextAlign.center,
-                //                     decoration: InputDecoration(
-                //                         hintText: "0",
-                //                         border: UnderlineInputBorder(
-                //                             borderSide: BorderSide(
-                //                                 color:
-                //                                     Colors.black))),
-                //                   ),
-                //                 ),
-                //                 Padding(
-                //                   padding:
-                //                       const EdgeInsets.only(top: 0.0),
-                //                   child: Text("QTY",
-                //                       style: TextStyle(
-                //                           color: Colors.grey,
-                //                           fontWeight:
-                //                               FontWeight.bold)),
-                //                 ),
-                //               ],
-                //             ),
-                //             Row(
-                //               children: [
-                //                 IconButton(
-                //                     onPressed: () {},
-                //                     icon: Icon(
-                //                       Icons.delete_forever,
-                //                       color: Colors.red,
-                //                     )),
-                //               ],
-                //             ),
-                //           ],
-                //         )
-                //       ],
-                //     ),
-                //   ),
-                // ),
-                //         ),
-                //       );
-                //     }),
-              ),
-              SizedBox(
-                height: 50,
-              )
-            ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    widget.selectedItems.toString()[index],
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                _postSalesLine();
+              },
+              icon: const Icon(Icons.shopping_cart_checkout_rounded),
+              label: const Text('Check Out: 2,000₵'),
+            ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _postSalesLine();
-        },
-        backgroundColor: Colors.black,
-        icon: Icon(
-          Icons.shopping_cart,
-          color: Colors.white,
-        ),
-        label: Text(
-          'Check Out: 2,000₵',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -224,8 +109,8 @@ class _CartState extends State<Cart> {
     //   helper.snackBarNotification("Please provide password", context);
     //   return;
     // }
-    SimpleFontelicoProgressDialog progressDialog =
-        SimpleFontelicoProgressDialog(context: context, barrierDimisable: true);
+    AppLoadingDialog progressDialog =
+        AppLoadingDialog(context: context, barrierDimisable: true);
     progressDialog.show(
       message: "Loading ...",
     );

@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'Models/visitationModel.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_widgets.dart';
 
 class visitationDeatils extends StatelessWidget {
   const visitationDeatils({super.key, required this.visit});
@@ -27,90 +29,79 @@ class visitationDeatils extends StatelessWidget {
         !(visit.Latitude == 0 && visit.Longitute == 0);
     final outcome = visit.Outcome_of_the_visit ?? '';
     final comment = visit.Comment ?? '';
+    final type = visit.Visitation_Type ?? '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          "Visitation Details",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
+        title: const Text("Visit details"),
       ),
       body: ListView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
         children: [
-          Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color.fromRGBO(15, 86, 148, 1), Color(0xFF2E7BC4)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
+          AppCard(
+            padding: const EdgeInsets.fromLTRB(16, 22, 16, 20),
+            child: Column(
               children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.white24,
-                  child: Icon(Icons.storefront, color: Colors.white, size: 28),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        visit.Customer_Name ?? "Unknown customer",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        visit.CustomerID ?? "",
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      if ((visit.Visitation_Type ?? '').isNotEmpty) ...[
-                        SizedBox(height: 10),
-                        Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white24,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            visit.Visitation_Type!,
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ],
+                Container(
+                  width: 84,
+                  height: 84,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primarySoft,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    initialsOf(visit.Customer_Name),
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
+                const SizedBox(height: 14),
+                Text(
+                  visit.Customer_Name ?? "Unknown customer",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  visit.CustomerID ?? "",
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 16,
+                  ),
+                ),
+                if (type.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  StatusPill(
+                    text: type,
+                    color: type.toLowerCase().contains("sales")
+                        ? AppColors.success
+                        : AppColors.warning,
+                  ),
+                ],
               ],
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 22),
           _Section(
             title: "When",
             children: [
               _DetailRow(
-                icon: Icons.event,
+                icon: Icons.calendar_today_outlined,
                 label: "Date",
                 value: visitedAt == null
                     ? (visit.Date ?? "-")
                     : DateFormat('EEEE, d MMMM yyyy').format(visitedAt),
               ),
               _DetailRow(
-                icon: Icons.access_time,
+                icon: Icons.schedule_rounded,
                 label: "Time",
                 value: visitedAt == null || (visit.Time ?? '').isEmpty
                     ? (visit.Time ?? "-")
@@ -122,7 +113,7 @@ class visitationDeatils extends StatelessWidget {
             title: "Visited by",
             children: [
               _DetailRow(
-                icon: Icons.person_outline,
+                icon: Icons.person_outline_rounded,
                 label: "User",
                 value: visit.UserID ?? "-",
               ),
@@ -137,7 +128,7 @@ class visitationDeatils extends StatelessWidget {
                 value: outcome.isEmpty ? "Not recorded" : outcome,
               ),
               _DetailRow(
-                icon: Icons.notes,
+                icon: Icons.notes_rounded,
                 label: "Comment",
                 value: comment.isEmpty ? "No comment" : comment,
               ),
@@ -147,7 +138,7 @@ class visitationDeatils extends StatelessWidget {
             title: "Location",
             children: [
               _DetailRow(
-                icon: Icons.my_location,
+                icon: Icons.my_location_rounded,
                 label: "Latitude",
                 value: visit.Latitude?.toString() ?? "-",
               ),
@@ -158,20 +149,13 @@ class visitationDeatils extends StatelessWidget {
               ),
               if (hasLocation)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color.fromRGBO(15, 86, 148, 1),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
                       onPressed: () => _openInMaps(context),
-                      icon: Icon(Icons.map_outlined),
-                      label: Text("Open in Google Maps"),
+                      icon: const Icon(Icons.map_outlined),
+                      label: const Text("Open in Google Maps"),
                     ),
                   ),
                 ),
@@ -192,28 +176,13 @@ class _Section extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 6),
-            child: Text(
-              title.toUpperCase(),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.1,
-                color: Colors.grey[600],
-              ),
-            ),
-          ),
-          Card(
-            color: Colors.white,
-            elevation: 0,
-            margin: EdgeInsets.zero,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          SmallCapsLabel(title),
+          AppCard(
+            padding: const EdgeInsets.symmetric(vertical: 4),
             child: Column(children: children),
           ),
         ],
@@ -232,16 +201,36 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: Color.fromRGBO(15, 86, 148, 1)),
-      title: Text(
-        label,
-        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-      ),
-      subtitle: Text(
-        value,
-        style: TextStyle(
-            fontSize: 15, color: Colors.black87, fontWeight: FontWeight.w500),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          IconBadge(icon: icon, color: AppColors.primary, size: 40),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15.5,
+                    color: AppColors.textDark,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
